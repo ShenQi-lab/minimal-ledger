@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="manifest.json">
-  <title>极简记账本 V1.5.0</title>
+  <title>极简记账本 V1.5.1</title>
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
   <style>
@@ -880,14 +880,20 @@
       function confirmBudget() {
         var rawValue = budgetInput.value.trim();
         if (rawValue === "") {
-          // 清空预算
+          // 空字符串 -> 清空预算
           budget = null;
           localStorage.removeItem(BUDGET_KEY);
         } else {
           var num = parseFloat(rawValue);
-          if (isNaN(num) || num <= 0) return; // 无效输入无视
-          budget = num;
-          localStorage.setItem(BUDGET_KEY, budget);
+          if (isNaN(num) || num < 0) return; // 非数字或负数 -> 无反应
+          if (num === 0) {
+            // 输入 0 等同于未设置
+            budget = null;
+            localStorage.removeItem(BUDGET_KEY);
+          } else {
+            budget = num;
+            localStorage.setItem(BUDGET_KEY, budget);
+          }
         }
         updateBudgetDisplay();
         closeBudgetModal();
