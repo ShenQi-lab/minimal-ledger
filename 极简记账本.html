@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>极简记账本 V1.0</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #2c2c2c;
+      --text-light: #666666;
+      --accent: #FF8C42;
+      --accent-hover: #e67830;
+      --accent-active: #cc6a28;
+      --clear: #d0d0d0;
+      --clear-hover: #b8b8b8;
+      --clear-text: #555555;
+      --input-border: #d5d5d5;
+      --input-focus: #FF8C42;
+      --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+      --radius: 12px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial,
+        sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      padding: 40px 28px 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+    }
+
+    /* ---------- 标题 ---------- */
+    .title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-light);
+      letter-spacing: 0.05em;
+    }
+
+    /* ---------- 总支出显示区 ---------- */
+    .display-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 32px 40px;
+      border-radius: var(--radius);
+      background: #fafafa;
+      box-shadow: var(--shadow);
+      width: 100%;
+      transition: transform 0.15s ease;
+    }
+
+    .display-label {
+      font-size: 0.95rem;
+      color: var(--text-light);
+      font-weight: 500;
+    }
+
+    .display-amount {
+      font-size: 3.8rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+        color 0.18s ease;
+      transform-origin: center center;
+    }
+
+    .display-unit {
+      font-size: 1.4rem;
+      font-weight: 500;
+      color: var(--text-light);
+      margin-left: 4px;
+      display: inline-block;
+      vertical-align: baseline;
+    }
+
+    /* 弹跳动画 */
+    .bounce {
+      animation: bounceIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes bounceIn {
+      0% {
+        transform: scale(1);
+      }
+      35% {
+        transform: scale(1.18);
+        color: var(--accent);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .reset-flash {
+      animation: resetFlash 0.28s ease;
+    }
+
+    @keyframes resetFlash {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(0.92);
+        color: #999;
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    /* ---------- 输入区 ---------- */
+    .input-wrapper {
+      width: 100%;
+    }
+
+    .amount-input {
+      width: 100%;
+      height: 52px;
+      border: 2px solid var(--input-border);
+      border-radius: var(--radius);
+      padding: 0 16px;
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: var(--text);
+      text-align: center;
+      outline: none;
+      background: #fff;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      -webkit-appearance: none;
+      -moz-appearance: textfield;
+    }
+
+    .amount-input:focus {
+      border-color: var(--input-focus);
+      box-shadow: 0 0 0 3px rgba(255, 140, 66, 0.15);
+    }
+
+    .amount-input::placeholder {
+      color: #c0c0c0;
+      font-weight: 400;
+      font-size: 1rem;
+    }
+
+    /* 隐藏 number 输入框的上下箭头 */
+    .amount-input::-webkit-inner-spin-button,
+    .amount-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* ---------- 按钮区 ---------- */
+    .button-group {
+      display: flex;
+      gap: 14px;
+      width: 100%;
+    }
+
+    .btn {
+      flex: 1;
+      height: 50px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.18s ease, transform 0.1s ease,
+        box-shadow 0.18s ease;
+      letter-spacing: 0.03em;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 3px 10px rgba(255, 140, 66, 0.3);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .btn-primary:active {
+      background-color: var(--accent-active);
+      box-shadow: 0 1px 4px rgba(255, 140, 66, 0.3);
+    }
+
+    .btn-secondary {
+      background-color: var(--clear);
+      color: var(--clear-text);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--clear-hover);
+    }
+
+    /* ---------- 底部提示 ---------- */
+    .hint {
+      font-size: 0.78rem;
+      color: #b0b0b0;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* ========== 移动端优化 ========== */
+    @media (max-width: 480px) {
+      .container {
+        padding: 28px 18px 36px;
+        gap: 24px;
+      }
+
+      .display-area {
+        padding: 24px 20px;
+      }
+
+      .display-amount {
+        font-size: 3.2rem;
+      }
+
+      .amount-input {
+        height: 48px;
+        font-size: 1.1rem;
+      }
+
+      .btn {
+        height: 48px;
+        font-size: 1.05rem;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .display-amount {
+        font-size: 2.6rem;
+      }
+
+      .button-group {
+        gap: 10px;
+      }
+
+      .btn {
+        height: 44px;
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- 标题 -->
+    <h1 class="title">极简记账本</h1>
+
+    <!-- 今日支出显示 -->
+    <div class="display-area" id="displayArea">
+      <span class="display-label">今日支出</span>
+      <div>
+        <span class="display-amount" id="totalAmount">0</span>
+        <span class="display-unit">元</span>
+      </div>
+    </div>
+
+    <!-- 金额输入 -->
+    <div class="input-wrapper">
+      <input
+        type="number"
+        class="amount-input"
+        id="amountInput"
+        placeholder="输入消费金额"
+        step="0.01"
+        min="0"
+        inputmode="decimal"
+        autocomplete="off"
+      >
+    </div>
+
+    <!-- 按钮组 -->
+    <div class="button-group">
+      <button class="btn btn-primary" id="addBtn">记一笔</button>
+      <button class="btn btn-secondary" id="resetBtn">清零</button>
+    </div>
+
+    <!-- 提示 -->
+    <p class="hint">打开即用，关闭后数据不保存 · 按回车快速记账</p>
+  </div>
+
+  <script>
+    (function () {
+      // ---------- DOM 元素 ----------
+      const totalAmountEl = document.getElementById("totalAmount");
+      const displayAreaEl = document.getElementById("displayArea");
+      const amountInput = document.getElementById("amountInput");
+      const addBtn = document.getElementById("addBtn");
+      const resetBtn = document.getElementById("resetBtn");
+
+      // ---------- 状态 ----------
+      let total = 0;
+
+      // ---------- 格式化金额：保留两位小数，去掉末尾多余的零 ----------
+      function formatAmount(value) {
+        return parseFloat(value.toFixed(2));
+      }
+
+      // ---------- 更新显示 ----------
+      function updateDisplay() {
+        totalAmountEl.textContent = formatAmount(total);
+      }
+
+      // ---------- 触发弹跳动画 ----------
+      function triggerBounceAnimation(className) {
+        totalAmountEl.classList.remove("bounce", "reset-flash");
+        // 强制回流以重新触发动画
+        void totalAmountEl.offsetWidth;
+        totalAmountEl.classList.add(className);
+      }
+
+      // ---------- 记一笔 ----------
+      function addRecord() {
+        const rawValue = amountInput.value.trim();
+
+        // 空值或无意义输入 -> 无反应
+        if (rawValue === "") return;
+
+        const num = parseFloat(rawValue);
+
+        // 非数字、NaN、<= 0 -> 无反应
+        if (isNaN(num) || num <= 0) return;
+
+        // 累加
+        total += num;
+        updateDisplay();
+        triggerBounceAnimation("bounce");
+
+        // 清空输入框
+        amountInput.value = "";
+        amountInput.focus();
+      }
+
+      // ---------- 清零 ----------
+      function resetTotal() {
+        if (total === 0) return; // 已经是 0 无需操作
+        total = 0;
+        updateDisplay();
+        triggerBounceAnimation("reset-flash");
+      }
+
+      // ---------- 输入过滤：实时过滤非数字字符 ----------
+      amountInput.addEventListener("input", function () {
+        // 移除负号、字母等非法字符（保留数字、小数点）
+        // 注意：type="number" 已经做了大部分过滤，这里做二次兜底
+        let val = this.value;
+        // 只允许数字和一个小数点
+        val = val.replace(/[^0-9.]/g, "");
+        // 只保留第一个小数点
+        const dotIndex = val.indexOf(".");
+        if (dotIndex !== -1) {
+          val =
+            val.substring(0, dotIndex + 1) +
+            val.substring(dotIndex + 1).replace(/\./g, "");
+        }
+        // 限制小数点后最多两位
+        if (dotIndex !== -1) {
+          const decimalPart = val.substring(dotIndex + 1);
+          if (decimalPart.length > 2) {
+            val = val.substring(0, dotIndex + 3);
+          }
+        }
+        this.value = val;
+      });
+
+      // 阻止输入框内粘贴非数字内容后再做过滤
+      amountInput.addEventListener("paste", function (e) {
+        const pastedData = (e.clipboardData || window.clipboardData)
+          .getData("text");
+        if (pastedData && !/^[\d.]+$/.test(pastedData)) {
+          // 尝试从中提取数字
+          const cleaned = pastedData.replace(/[^0-9.]/g, "");
+          const dotIdx = cleaned.indexOf(".");
+          let final = cleaned;
+          if (dotIdx !== -1) {
+            final =
+              cleaned.substring(0, dotIdx + 1) +
+              cleaned.substring(dotIdx + 1).replace(/\./g, "");
+          }
+          e.preventDefault();
+          this.value = final;
+          // 触发 input 事件以进行二次过滤
+          this.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      });
+
+      // ---------- 按钮事件 ----------
+      addBtn.addEventListener("click", addRecord);
+
+      resetBtn.addEventListener("click", resetTotal);
+
+      // ---------- 键盘支持：Enter 键记一笔 ----------
+      amountInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          addRecord();
+        }
+      });
+
+      // ---------- 页面加载时聚焦输入框 ----------
+      amountInput.focus();
+
+      // ---------- 阻止移动端双击缩放（在 display-area 上） ----------
+      displayAreaEl.addEventListener(
+        "dblclick",
+        function (e) {
+          e.preventDefault();
+        },
+        { passive: false }
+      );
+    })();
+  </script>
+
+</body>
+</html>
