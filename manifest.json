@@ -1,7 +1,8 @@
 {
   "name": "极简记账本",
   "short_name": "记账本",
-  "start_url": ".",
+  "scope": "/minimal-ledger/",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#FF8C42",
@@ -9,7 +10,8 @@
     {
       "src": "icon.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

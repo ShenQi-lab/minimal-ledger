@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="manifest.json">
-  <title>极简记账本 V1.4.0</title>
+  <title>极简记账本 V1.5.0</title>
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
   <style>
@@ -625,9 +625,25 @@
       </div>
     </div>
 
-    <!-- 提示 -->
-    <p class="hint">数据自动保存到浏览器 · 刷新/关闭后记录不丢失 · 按回车快速记账</p>
+  <!-- 提示 -->
+    <p class="hint">数据自动保存到浏览器 · 刷新/关闭后记录不丢失 · 按回车快速记账 · 支持离线使用</p>
   </div>
+
+  <!-- Service Worker 注册 -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("./sw.js").then(function (registration) {
+          console.log(
+            "[极简记账本] Service Worker 注册成功，scope:",
+            registration.scope
+          );
+        }).catch(function (err) {
+          console.error("[极简记账本] Service Worker 注册失败:", err);
+        });
+      });
+    }
+  </script>
 
   <script>
     (function () {
