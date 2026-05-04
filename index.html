@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>极简记账本 V1.1.3</title>
+  <title>极简记账本 V1.2.0</title>
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
   <style>
@@ -135,6 +135,140 @@
       100% {
         transform: scale(1);
       }
+    }
+
+    /* ---------- 预算行 ---------- */
+    .budget-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .budget-remaining {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      font-weight: 500;
+    }
+
+    .budget-remaining.over-budget {
+      color: #e04848;
+      font-weight: 600;
+    }
+
+    .budget-set-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 50%;
+      background: #e8e8e8;
+      color: #777;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease, color 0.15s ease;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .budget-set-btn:hover {
+      background: #d5d5d5;
+      color: #555;
+    }
+
+    .budget-set-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* ---------- 预算弹窗 ---------- */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      animation: fadeIn 0.18s ease;
+    }
+
+    .modal-overlay.hidden {
+      display: none;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-box {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 28px 24px 24px;
+      width: 300px;
+      max-width: 90vw;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+      text-align: center;
+    }
+
+    .modal-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    .modal-input {
+      width: 100%;
+      height: 44px;
+      border: 2px solid var(--input-border);
+      border-radius: var(--radius);
+      padding: 0 14px;
+      font-size: 1.1rem;
+      text-align: center;
+      outline: none;
+      margin-bottom: 16px;
+      transition: border-color 0.2s ease;
+    }
+
+    .modal-input:focus {
+      border-color: var(--accent);
+    }
+
+    .modal-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      height: 40px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .modal-btn-cancel {
+      background: #e8e8e8;
+      color: #666;
+    }
+
+    .modal-btn-cancel:hover {
+      background: #d5d5d5;
+    }
+
+    .modal-btn-confirm {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .modal-btn-confirm:hover {
+      background: var(--accent-hover);
     }
 
     /* ---------- 输入区 ---------- */
@@ -289,6 +423,10 @@
         <span class="display-amount" id="totalAmount">0</span>
         <span class="display-unit">元</span>
       </div>
+      <div class="budget-row">
+        <span class="budget-remaining" id="budgetRemaining">今日预算剩余：--元</span>
+        <button class="budget-set-btn" id="budgetSetBtn" title="设置预算">⚙</button>
+      </div>
     </div>
 
     <!-- 金额输入 -->
@@ -306,7 +444,27 @@
     <!-- 按钮组 -->
     <div class="button-group">
       <button class="btn btn-primary" id="addBtn">记一笔</button>
+      <button class="btn btn-secondary" id="undoBtn">撤销</button>
       <button class="btn btn-secondary" id="resetBtn">清零</button>
+    </div>
+
+    <!-- 预算设置弹窗 -->
+    <div class="modal-overlay hidden" id="budgetModal">
+      <div class="modal-box">
+        <div class="modal-title">设置今日预算</div>
+        <input
+          type="text"
+          class="modal-input"
+          id="budgetInput"
+          placeholder="输入预算金额"
+          inputmode="decimal"
+          autocomplete="off"
+        >
+        <div class="modal-btns">
+          <button class="modal-btn modal-btn-cancel" id="budgetCancelBtn">取消</button>
+          <button class="modal-btn modal-btn-confirm" id="budgetConfirmBtn">确定</button>
+        </div>
+      </div>
     </div>
 
     <!-- 提示 -->
@@ -318,15 +476,26 @@
       // ---------- DOM 元素 ----------
       const totalAmountEl = document.getElementById("totalAmount");
       const displayAreaEl = document.getElementById("displayArea");
+      const budgetRemainingEl = document.getElementById("budgetRemaining");
+      const budgetSetBtn = document.getElementById("budgetSetBtn");
+      const budgetModal = document.getElementById("budgetModal");
+      const budgetInput = document.getElementById("budgetInput");
+      const budgetCancelBtn = document.getElementById("budgetCancelBtn");
+      const budgetConfirmBtn = document.getElementById("budgetConfirmBtn");
       const amountInput = document.getElementById("amountInput");
       const addBtn = document.getElementById("addBtn");
+      const undoBtn = document.getElementById("undoBtn");
       const resetBtn = document.getElementById("resetBtn");
 
       // ---------- localStorage key ----------
       const STORAGE_KEY = "minimal_ledger_total";
+      const HISTORY_KEY = "minimal_ledger_history";
+      const BUDGET_KEY = "minimal_ledger_budget";
 
       // ---------- 状态 ----------
       let total = 0;
+      let history = [];       // 每条记账金额的记录栈
+      let budget = null;      // null 表示未设置
 
       // ---------- 从 localStorage 读取初始值 ----------
       function loadFromStorage() {
@@ -337,11 +506,32 @@
             total = num;
           }
         }
+        // 读取历史记录
+        const storedHistory = localStorage.getItem(HISTORY_KEY);
+        if (storedHistory !== null) {
+          try {
+            const parsed = JSON.parse(storedHistory);
+            if (Array.isArray(parsed)) {
+              history = parsed.filter(function (v) { return typeof v === "number" && !isNaN(v) && v > 0; });
+            }
+          } catch (e) {
+            history = [];
+          }
+        }
+        // 读取预算
+        const storedBudget = localStorage.getItem(BUDGET_KEY);
+        if (storedBudget !== null) {
+          const num = parseFloat(storedBudget);
+          if (!isNaN(num) && num > 0) {
+            budget = num;
+          }
+        }
       }
 
       // ---------- 保存到 localStorage ----------
       function saveToStorage() {
         localStorage.setItem(STORAGE_KEY, formatAmount(total));
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
       }
 
       // ---------- 格式化金额：保留两位小数，去掉末尾多余的零 ----------
@@ -352,6 +542,24 @@
       // ---------- 更新显示 ----------
       function updateDisplay() {
         totalAmountEl.textContent = formatAmount(total);
+        updateBudgetDisplay();
+      }
+
+      // ---------- 更新预算显示 ----------
+      function updateBudgetDisplay() {
+        if (budget === null) {
+          budgetRemainingEl.textContent = "今日预算剩余：--元";
+          budgetRemainingEl.classList.remove("over-budget");
+        } else {
+          var remaining = budget - total;
+          remaining = parseFloat(remaining.toFixed(2));
+          budgetRemainingEl.textContent = "今日预算剩余：" + remaining + "元";
+          if (remaining < 0) {
+            budgetRemainingEl.classList.add("over-budget");
+          } else {
+            budgetRemainingEl.classList.remove("over-budget");
+          }
+        }
       }
 
       // ---------- 触发弹跳动画 ----------
@@ -376,6 +584,8 @@
 
         // 累加
         total += num;
+        // 记录到历史栈
+        history.push(num);
         saveToStorage();
         updateDisplay();
         triggerBounceAnimation("bounce");
@@ -385,10 +595,22 @@
         amountInput.focus();
       }
 
+      // ---------- 撤销上一笔 ----------
+      function undoLast() {
+        if (history.length === 0) return; // 无记录可撤销
+        var lastAmount = history.pop();
+        total -= lastAmount;
+        total = parseFloat(total.toFixed(2));
+        saveToStorage();
+        updateDisplay();
+        triggerBounceAnimation("reset-flash");
+      }
+
       // ---------- 清零 ----------
       function resetTotal() {
         if (total === 0) return; // 已经是 0 无需操作
         total = 0;
+        history = [];
         saveToStorage();
         updateDisplay();
         triggerBounceAnimation("reset-flash");
@@ -439,10 +661,57 @@
         }
       });
 
+      // ---------- 预算弹窗：打开 ----------
+      function openBudgetModal() {
+        budgetInput.value = budget !== null ? budget : "";
+        budgetModal.classList.remove("hidden");
+        setTimeout(function () { budgetInput.focus(); }, 100);
+      }
+
+      // ---------- 预算弹窗：关闭 ----------
+      function closeBudgetModal() {
+        budgetModal.classList.add("hidden");
+      }
+
+      // ---------- 预算弹窗：确认设置 ----------
+      function confirmBudget() {
+        var rawValue = budgetInput.value.trim();
+        if (rawValue === "") {
+          // 清空预算
+          budget = null;
+          localStorage.removeItem(BUDGET_KEY);
+        } else {
+          var num = parseFloat(rawValue);
+          if (isNaN(num) || num <= 0) return; // 无效输入无视
+          budget = num;
+          localStorage.setItem(BUDGET_KEY, budget);
+        }
+        updateBudgetDisplay();
+        closeBudgetModal();
+      }
+
       // ---------- 按钮事件 ----------
       addBtn.addEventListener("click", addRecord);
-
+      undoBtn.addEventListener("click", undoLast);
       resetBtn.addEventListener("click", resetTotal);
+      budgetSetBtn.addEventListener("click", openBudgetModal);
+      budgetCancelBtn.addEventListener("click", closeBudgetModal);
+      budgetConfirmBtn.addEventListener("click", confirmBudget);
+
+      // 点击遮罩关闭弹窗
+      budgetModal.addEventListener("click", function (e) {
+        if (e.target === budgetModal) {
+          closeBudgetModal();
+        }
+      });
+
+      // 预算弹窗内 Enter 键确认
+      budgetInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          confirmBudget();
+        }
+      });
 
       // ---------- 键盘支持：Enter 键记一笔 ----------
       amountInput.addEventListener("keydown", function (e) {
