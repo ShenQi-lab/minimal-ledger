@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>极简记账本 V1.0</title>
+  <title>极简记账本 V1.1.0</title>
   <style>
     :root {
       --bg: #ffffff;
@@ -310,7 +310,7 @@
     </div>
 
     <!-- 提示 -->
-    <p class="hint">打开即用，关闭后数据不保存 · 按回车快速记账</p>
+    <p class="hint">数据自动保存到浏览器 · 刷新/关闭后记录不丢失 · 按回车快速记账</p>
   </div>
 
   <script>
@@ -322,8 +322,27 @@
       const addBtn = document.getElementById("addBtn");
       const resetBtn = document.getElementById("resetBtn");
 
+      // ---------- localStorage key ----------
+      const STORAGE_KEY = "minimal_ledger_total";
+
       // ---------- 状态 ----------
       let total = 0;
+
+      // ---------- 从 localStorage 读取初始值 ----------
+      function loadFromStorage() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored !== null) {
+          const num = parseFloat(stored);
+          if (!isNaN(num) && num >= 0) {
+            total = num;
+          }
+        }
+      }
+
+      // ---------- 保存到 localStorage ----------
+      function saveToStorage() {
+        localStorage.setItem(STORAGE_KEY, formatAmount(total));
+      }
 
       // ---------- 格式化金额：保留两位小数，去掉末尾多余的零 ----------
       function formatAmount(value) {
@@ -357,6 +376,7 @@
 
         // 累加
         total += num;
+        saveToStorage();
         updateDisplay();
         triggerBounceAnimation("bounce");
 
@@ -369,6 +389,7 @@
       function resetTotal() {
         if (total === 0) return; // 已经是 0 无需操作
         total = 0;
+        saveToStorage();
         updateDisplay();
         triggerBounceAnimation("reset-flash");
       }
@@ -430,6 +451,10 @@
           addRecord();
         }
       });
+
+      // ---------- 页面初始化：读取存储并显示 ----------
+      loadFromStorage();
+      updateDisplay();
 
       // ---------- 页面加载时聚焦输入框 ----------
       amountInput.focus();
