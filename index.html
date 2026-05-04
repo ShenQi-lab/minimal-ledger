@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>极简记账本 V1.2.0</title>
+  <title>极简记账本 V1.3.0</title>
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
   <style>
@@ -180,6 +180,136 @@
 
     .budget-set-btn:active {
       transform: scale(0.92);
+    }
+
+    /* ---------- 历史按钮 ---------- */
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .history-btn {
+      font-size: 0.85rem;
+      color: var(--text-light);
+      background: #f5f5f5;
+      border: 1px solid #dcdcdc;
+      border-radius: 6px;
+      padding: 5px 12px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
+    }
+
+    .history-btn:hover {
+      background: #ebebeb;
+    }
+
+    .history-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* ---------- 历史记录弹窗 ---------- */
+    .history-modal-box {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 380px;
+      max-width: 92vw;
+      max-height: 70vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .history-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-shrink: 0;
+    }
+
+    .history-modal-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .history-modal-close {
+      width: 30px;
+      height: 30px;
+      border: none;
+      border-radius: 50%;
+      background: #e8e8e8;
+      color: #777;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .history-modal-close:hover {
+      background: #d5d5d5;
+    }
+
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .history-empty {
+      text-align: center;
+      color: #b0b0b0;
+      font-size: 0.95rem;
+      padding: 32px 0;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: #fafafa;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .history-item-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .history-item-amount {
+      font-weight: 600;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .history-item-note {
+      color: var(--text-light);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .history-item-time {
+      color: #b0b0b0;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      margin-left: 10px;
     }
 
     /* ---------- 预算弹窗 ---------- */
@@ -414,7 +544,10 @@
 
   <div class="container">
     <!-- 标题 -->
-    <h1 class="title">极简记账本</h1>
+    <div class="header-row">
+      <h1 class="title">极简记账本</h1>
+      <button class="history-btn" id="historyBtn">📋 历史</button>
+    </div>
 
     <!-- 今日支出显示 -->
     <div class="display-area" id="displayArea">
@@ -437,6 +570,17 @@
         id="amountInput"
         placeholder="输入消费金额"
         inputmode="decimal"
+        autocomplete="off"
+      >
+    </div>
+
+    <!-- 备注输入 -->
+    <div class="input-wrapper">
+      <input
+        type="text"
+        class="amount-input"
+        id="noteInput"
+        placeholder="买了什么（可选）"
         autocomplete="off"
       >
     </div>
@@ -467,6 +611,19 @@
       </div>
     </div>
 
+    <!-- 历史记录弹窗 -->
+    <div class="modal-overlay hidden" id="historyModal">
+      <div class="history-modal-box">
+        <div class="history-modal-header">
+          <span class="history-modal-title">今日记录</span>
+          <button class="history-modal-close" id="historyCloseBtn">✕</button>
+        </div>
+        <div class="history-list" id="historyList">
+          <div class="history-empty">今日暂无记录</div>
+        </div>
+      </div>
+    </div>
+
     <!-- 提示 -->
     <p class="hint">数据自动保存到浏览器 · 刷新/关闭后记录不丢失 · 按回车快速记账</p>
   </div>
@@ -482,10 +639,15 @@
       const budgetInput = document.getElementById("budgetInput");
       const budgetCancelBtn = document.getElementById("budgetCancelBtn");
       const budgetConfirmBtn = document.getElementById("budgetConfirmBtn");
+      const noteInput = document.getElementById("noteInput");
       const amountInput = document.getElementById("amountInput");
       const addBtn = document.getElementById("addBtn");
       const undoBtn = document.getElementById("undoBtn");
       const resetBtn = document.getElementById("resetBtn");
+      const historyBtn = document.getElementById("historyBtn");
+      const historyModal = document.getElementById("historyModal");
+      const historyList = document.getElementById("historyList");
+      const historyCloseBtn = document.getElementById("historyCloseBtn");
 
       // ---------- localStorage key ----------
       const STORAGE_KEY = "minimal_ledger_total";
@@ -494,34 +656,53 @@
 
       // ---------- 状态 ----------
       let total = 0;
-      let history = [];       // 每条记账金额的记录栈
+      // 每条记录：{ amount: 数字, note: 字符串, time: "HH:MM:SS" }
+      let history = [];
       let budget = null;      // null 表示未设置
+
+      // ---------- 获取当前时间字符串 ----------
+      function getTimeString() {
+        var now = new Date();
+        var h = now.getHours().toString().padStart(2, "0");
+        var m = now.getMinutes().toString().padStart(2, "0");
+        var s = now.getSeconds().toString().padStart(2, "0");
+        return h + ":" + m + ":" + s;
+      }
 
       // ---------- 从 localStorage 读取初始值 ----------
       function loadFromStorage() {
-        const stored = localStorage.getItem(STORAGE_KEY);
+        var stored = localStorage.getItem(STORAGE_KEY);
         if (stored !== null) {
-          const num = parseFloat(stored);
+          var num = parseFloat(stored);
           if (!isNaN(num) && num >= 0) {
             total = num;
           }
         }
         // 读取历史记录
-        const storedHistory = localStorage.getItem(HISTORY_KEY);
+        var storedHistory = localStorage.getItem(HISTORY_KEY);
         if (storedHistory !== null) {
           try {
-            const parsed = JSON.parse(storedHistory);
+            var parsed = JSON.parse(storedHistory);
             if (Array.isArray(parsed)) {
-              history = parsed.filter(function (v) { return typeof v === "number" && !isNaN(v) && v > 0; });
+              // 自动迁移旧格式（纯数字数组 -> 对象数组）
+              history = parsed.map(function (v) {
+                if (typeof v === "number") {
+                  return { amount: v, note: "未备注", time: "--:--" };
+                }
+                if (v && typeof v.amount === "number") {
+                  return v;
+                }
+                return null;
+              }).filter(function (v) { return v !== null; });
             }
           } catch (e) {
             history = [];
           }
         }
         // 读取预算
-        const storedBudget = localStorage.getItem(BUDGET_KEY);
+        var storedBudget = localStorage.getItem(BUDGET_KEY);
         if (storedBudget !== null) {
-          const num = parseFloat(storedBudget);
+          var num = parseFloat(storedBudget);
           if (!isNaN(num) && num > 0) {
             budget = num;
           }
@@ -572,34 +753,39 @@
 
       // ---------- 记一笔 ----------
       function addRecord() {
-        const rawValue = amountInput.value.trim();
+        var rawValue = amountInput.value.trim();
 
         // 空值或无意义输入 -> 无反应
         if (rawValue === "") return;
 
-        const num = parseFloat(rawValue);
+        var num = parseFloat(rawValue);
 
         // 非数字、NaN、<= 0 -> 无反应
         if (isNaN(num) || num <= 0) return;
 
+        var noteRaw = noteInput.value.trim();
+        var noteText = noteRaw !== "" ? noteRaw : "未备注";
+        var timeStr = getTimeString();
+
         // 累加
         total += num;
-        // 记录到历史栈
-        history.push(num);
+        // 记录到历史栈（对象格式）
+        history.push({ amount: num, note: noteText, time: timeStr });
         saveToStorage();
         updateDisplay();
         triggerBounceAnimation("bounce");
 
         // 清空输入框
         amountInput.value = "";
+        noteInput.value = "";
         amountInput.focus();
       }
 
       // ---------- 撤销上一笔 ----------
       function undoLast() {
         if (history.length === 0) return; // 无记录可撤销
-        var lastAmount = history.pop();
-        total -= lastAmount;
+        var lastRecord = history.pop();
+        total -= lastRecord.amount;
         total = parseFloat(total.toFixed(2));
         saveToStorage();
         updateDisplay();
@@ -690,6 +876,58 @@
         closeBudgetModal();
       }
 
+      // ---------- 历史弹窗：打开 ----------
+      function openHistoryModal() {
+        renderHistoryList();
+        historyModal.classList.remove("hidden");
+      }
+
+      // ---------- 历史弹窗：关闭 ----------
+      function closeHistoryModal() {
+        historyModal.classList.add("hidden");
+      }
+
+      // ---------- 渲染历史列表 ----------
+      function renderHistoryList() {
+        historyList.innerHTML = "";
+        if (history.length === 0) {
+          var emptyDiv = document.createElement("div");
+          emptyDiv.className = "history-empty";
+          emptyDiv.textContent = "今日暂无记录";
+          historyList.appendChild(emptyDiv);
+          return;
+        }
+        // 时间倒序（最新记录在上）
+        var reversed = history.slice().reverse();
+        for (var i = 0; i < reversed.length; i++) {
+          var record = reversed[i];
+          var itemDiv = document.createElement("div");
+          itemDiv.className = "history-item";
+
+          var leftDiv = document.createElement("div");
+          leftDiv.className = "history-item-left";
+
+          var amountSpan = document.createElement("span");
+          amountSpan.className = "history-item-amount";
+          amountSpan.textContent = "+" + formatAmount(record.amount) + "元";
+
+          var noteSpan = document.createElement("span");
+          noteSpan.className = "history-item-note";
+          noteSpan.textContent = record.note;
+
+          leftDiv.appendChild(amountSpan);
+          leftDiv.appendChild(noteSpan);
+
+          var timeSpan = document.createElement("span");
+          timeSpan.className = "history-item-time";
+          timeSpan.textContent = record.time;
+
+          itemDiv.appendChild(leftDiv);
+          itemDiv.appendChild(timeSpan);
+          historyList.appendChild(itemDiv);
+        }
+      }
+
       // ---------- 按钮事件 ----------
       addBtn.addEventListener("click", addRecord);
       undoBtn.addEventListener("click", undoLast);
@@ -697,11 +935,20 @@
       budgetSetBtn.addEventListener("click", openBudgetModal);
       budgetCancelBtn.addEventListener("click", closeBudgetModal);
       budgetConfirmBtn.addEventListener("click", confirmBudget);
+      historyBtn.addEventListener("click", openHistoryModal);
+      historyCloseBtn.addEventListener("click", closeHistoryModal);
 
       // 点击遮罩关闭弹窗
       budgetModal.addEventListener("click", function (e) {
         if (e.target === budgetModal) {
           closeBudgetModal();
+        }
+      });
+
+      // 点击遮罩关闭历史弹窗
+      historyModal.addEventListener("click", function (e) {
+        if (e.target === historyModal) {
+          closeHistoryModal();
         }
       });
 
@@ -715,6 +962,14 @@
 
       // ---------- 键盘支持：Enter 键记一笔 ----------
       amountInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          addRecord();
+        }
+      });
+
+      // 备注输入框也支持 Enter 键快速记账
+      noteInput.addEventListener("keydown", function (e) {
         if (e.key === "Enter") {
           e.preventDefault();
           addRecord();
