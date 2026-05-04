@@ -3,8 +3,8 @@
    缓存优先 (Cache First) 策略
 ========================================== */
 
-// 缓存名称（带版本号，便于更新时清理旧缓存）
-var CACHE_NAME = "minimal-ledger-v1.5.0";
+// 自动生成缓存版本号（每次 SW 更新时自动产生新版本）
+const CACHE_VERSION = 'cache-v' + new Date().getTime();
 
 // 需要预缓存的核心文件
 var CORE_FILES = [
@@ -17,7 +17,7 @@ var CORE_FILES = [
 /* ---------- install：预缓存核心文件 ---------- */
 self.addEventListener("install", function (event) {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(function (cache) {
+    caches.open(CACHE_VERSION).then(function (cache) {
       return cache.addAll(CORE_FILES);
     })
   );
@@ -31,7 +31,7 @@ self.addEventListener("activate", function (event) {
     caches.keys().then(function (cacheNames) {
       return Promise.all(
         cacheNames.map(function (name) {
-          if (name !== CACHE_NAME) {
+          if (name !== CACHE_VERSION) {
             return caches.delete(name);
           }
         })
@@ -59,7 +59,7 @@ self.addEventListener("fetch", function (event) {
           event.request.method === "GET"
         ) {
           var responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then(function (cache) {
+          caches.open(CACHE_VERSION).then(function (cache) {
             cache.put(event.request, responseToCache);
           });
         }
