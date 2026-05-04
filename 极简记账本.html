@@ -292,12 +292,10 @@
     <!-- 金额输入 -->
     <div class="input-wrapper">
       <input
-        type="number"
+        type="text"
         class="amount-input"
         id="amountInput"
         placeholder="输入消费金额"
-        step="0.01"
-        min="0"
         inputmode="decimal"
         autocomplete="off"
       >
@@ -397,7 +395,7 @@
       // ---------- 输入过滤：实时过滤非数字字符 ----------
       amountInput.addEventListener("input", function () {
         // 移除负号、字母等非法字符（保留数字、小数点）
-        // 注意：type="number" 已经做了大部分过滤，这里做二次兜底
+        // 输入框为 type="text"，此过滤作为主要防线
         let val = this.value;
         // 只允许数字和一个小数点
         val = val.replace(/[^0-9.]/g, "");
