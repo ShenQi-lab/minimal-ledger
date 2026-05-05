@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <title>极简记账本 V1.7.1</title>
+  <title>极简记账本 V1.7.3</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
   <link rel="icon" type="image/png" href="icon.png">
@@ -892,6 +892,7 @@
       const STORAGE_KEY = "minimal_ledger_total";
       const HISTORY_KEY = "minimal_ledger_history";
       const BUDGET_KEY = "minimal_ledger_budget";
+      const LAST_DATE_KEY = "minimal_ledger_last_date";
 
       // ---------- 状态 ----------
       let total = 0;
@@ -958,6 +959,16 @@
           }
         }
         total = parseFloat(total.toFixed(2));
+        // 跨天自动清零：检查最后记录日期
+        var storedLastDate = localStorage.getItem(LAST_DATE_KEY);
+        if (storedLastDate !== null && storedLastDate !== today) {
+          // 跨天了：total 已通过 today-matching 重算为 0，历史记录保留供统计使用
+          // 预算保留不变（沿用昨日预算）
+          localStorage.setItem(LAST_DATE_KEY, today);
+        } else if (storedLastDate === null) {
+          // 首次使用，初始化最后记录日期
+          localStorage.setItem(LAST_DATE_KEY, today);
+        }
         // 读取预算
         var storedBudget = localStorage.getItem(BUDGET_KEY);
         if (storedBudget !== null) {
@@ -972,6 +983,7 @@
       function saveToStorage() {
         localStorage.setItem(STORAGE_KEY, formatAmount(total));
         localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+        localStorage.setItem(LAST_DATE_KEY, getDateString());
       }
 
       // ---------- 格式化金额：保留两位小数，去掉末尾多余的零 ----------
