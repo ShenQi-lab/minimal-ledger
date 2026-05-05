@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <title>极简记账本 V1.5.5</title>
+  <title>极简记账本 V1.6.0</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
   <link rel="icon" type="image/png" href="icon.png">
@@ -316,7 +316,7 @@
       margin-left: 10px;
     }
 
-    /* ---------- 预算弹窗 ---------- */
+    /* ---------- 预算弹窗 & 清零确认弹窗 ---------- */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -352,6 +352,13 @@
       font-weight: 600;
       color: var(--text);
       margin-bottom: 16px;
+    }
+
+    .modal-desc {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      margin-bottom: 20px;
+      line-height: 1.5;
     }
 
     .modal-input {
@@ -403,6 +410,133 @@
 
     .modal-btn-confirm:hover {
       background: var(--accent-hover);
+    }
+
+    .modal-btn-danger {
+      background: #e04848;
+      color: #fff;
+    }
+
+    .modal-btn-danger:hover {
+      background: #c93a3a;
+    }
+
+    /* ---------- 历史记录操作按钮 ---------- */
+    .history-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 6px;
+      flex-shrink: 0;
+    }
+
+    .history-action-btn {
+      width: 26px;
+      height: 26px;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s ease;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+      color: #999;
+    }
+
+    .history-action-btn:hover {
+      background: #e8e8e8;
+      color: #555;
+    }
+
+    .history-action-btn:active {
+      transform: scale(0.88);
+      background: #ddd;
+    }
+
+    .history-action-btn.delete-btn:hover {
+      background: #fee;
+      color: #d44;
+    }
+
+    /* ---------- 历史记录编辑态 ---------- */
+    .history-item-edit-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .history-edit-input {
+      border: 1.5px solid var(--input-border);
+      border-radius: 5px;
+      padding: 3px 6px;
+      font-size: 0.82rem;
+      outline: none;
+      width: 60px;
+      text-align: center;
+      transition: border-color 0.15s ease;
+      -webkit-appearance: none;
+    }
+
+    .history-edit-input:focus {
+      border-color: var(--accent);
+    }
+
+    .history-edit-input.note-input {
+      flex: 1;
+      min-width: 50px;
+      text-align: left;
+    }
+
+    .history-edit-save {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .history-edit-save:hover {
+      background: var(--accent-hover);
+    }
+
+    .history-edit-save:active {
+      transform: scale(0.9);
+    }
+
+    .history-edit-cancel {
+      width: 26px;
+      height: 26px;
+      border: none;
+      border-radius: 50%;
+      background: #e8e8e8;
+      color: #777;
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .history-edit-cancel:hover {
+      background: #d5d5d5;
     }
 
     /* ---------- 输入区 ---------- */
@@ -615,6 +749,18 @@
       </div>
     </div>
 
+    <!-- 清零确认弹窗 -->
+    <div class="modal-overlay hidden" id="resetConfirmModal">
+      <div class="modal-box">
+        <div class="modal-title">确认清零</div>
+        <div class="modal-desc">确定要清零今日所有记录吗？此操作不可恢复。</div>
+        <div class="modal-btns">
+          <button class="modal-btn modal-btn-cancel" id="resetCancelBtn">取消</button>
+          <button class="modal-btn modal-btn-danger" id="resetConfirmBtn">确认清零</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 历史记录弹窗 -->
     <div class="modal-overlay hidden" id="historyModal">
       <div class="history-modal-box">
@@ -668,6 +814,9 @@
       const historyModal = document.getElementById("historyModal");
       const historyList = document.getElementById("historyList");
       const historyCloseBtn = document.getElementById("historyCloseBtn");
+      const resetConfirmModal = document.getElementById("resetConfirmModal");
+      const resetCancelBtn = document.getElementById("resetCancelBtn");
+      const resetConfirmBtn = document.getElementById("resetConfirmBtn");
 
       // ---------- localStorage key ----------
       const STORAGE_KEY = "minimal_ledger_total";
@@ -812,14 +961,25 @@
         triggerBounceAnimation("reset-flash");
       }
 
-      // ---------- 清零 ----------
+      // ---------- 清零（弹出确认弹窗） ----------
       function resetTotal() {
         if (total === 0) return; // 已经是 0 无需操作
+        resetConfirmModal.classList.remove("hidden");
+      }
+
+      // ---------- 确认清零 ----------
+      function confirmReset() {
         total = 0;
         history = [];
         saveToStorage();
         updateDisplay();
         triggerBounceAnimation("reset-flash");
+        resetConfirmModal.classList.add("hidden");
+      }
+
+      // ---------- 关闭清零确认弹窗 ----------
+      function closeResetConfirmModal() {
+        resetConfirmModal.classList.add("hidden");
       }
 
       // ---------- 输入过滤：实时过滤非数字字符 ----------
@@ -913,6 +1073,122 @@
         historyModal.classList.add("hidden");
       }
 
+      // ---------- 删除一条记录 ----------
+      function deleteRecord(originalIndex) {
+        if (!confirm("确定删除这条记录吗？")) return;
+        var removed = history.splice(originalIndex, 1)[0];
+        total -= removed.amount;
+        total = parseFloat(total.toFixed(2));
+        if (total < 0) total = 0;
+        saveToStorage();
+        updateDisplay();
+        renderHistoryList();
+      }
+
+      // ---------- 开始编辑一条记录 ----------
+      function startEdit(originalIndex, itemDiv) {
+        var record = history[originalIndex];
+        // 保存原始索引作为数据属性
+        itemDiv.setAttribute("data-editing-index", originalIndex);
+
+        // 清空原有内容
+        itemDiv.innerHTML = "";
+
+        var editRow = document.createElement("div");
+        editRow.className = "history-item-edit-row";
+
+        // 金额输入框
+        var amountInput = document.createElement("input");
+        amountInput.type = "text";
+        amountInput.inputMode = "decimal";
+        amountInput.className = "history-edit-input";
+        amountInput.value = formatAmount(record.amount);
+        amountInput.addEventListener("input", function () {
+          var val = this.value.replace(/[^0-9.]/g, "");
+          var dotIdx = val.indexOf(".");
+          if (dotIdx !== -1) {
+            val = val.substring(0, dotIdx + 1) + val.substring(dotIdx + 1).replace(/\./g, "");
+            if (val.substring(dotIdx + 1).length > 2) {
+              val = val.substring(0, dotIdx + 3);
+            }
+          }
+          this.value = val;
+        });
+
+        // 备注输入框
+        var noteInput = document.createElement("input");
+        noteInput.type = "text";
+        noteInput.className = "history-edit-input note-input";
+        noteInput.value = record.note;
+        noteInput.placeholder = "备注";
+
+        // 时间显示（不可编辑）
+        var timeSpan = document.createElement("span");
+        timeSpan.className = "history-item-time";
+        timeSpan.textContent = record.time;
+
+        // 保存按钮
+        var saveBtn = document.createElement("button");
+        saveBtn.className = "history-edit-save";
+        saveBtn.textContent = "✓";
+        saveBtn.title = "保存";
+        saveBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          saveEdit(originalIndex, amountInput.value.trim(), noteInput.value.trim());
+        });
+
+        // 取消按钮
+        var cancelBtn = document.createElement("button");
+        cancelBtn.className = "history-edit-cancel";
+        cancelBtn.textContent = "✕";
+        cancelBtn.title = "取消";
+        cancelBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          renderHistoryList();
+        });
+
+        editRow.appendChild(amountInput);
+        editRow.appendChild(noteInput);
+        editRow.appendChild(saveBtn);
+        editRow.appendChild(cancelBtn);
+
+        itemDiv.appendChild(editRow);
+        itemDiv.appendChild(timeSpan);
+
+        // 自动聚焦金额输入框
+        setTimeout(function () { amountInput.focus(); amountInput.select(); }, 50);
+
+        // 键盘支持：Enter 保存
+        amountInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") { e.preventDefault(); saveEdit(originalIndex, amountInput.value.trim(), noteInput.value.trim()); }
+        });
+        noteInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") { e.preventDefault(); saveEdit(originalIndex, amountInput.value.trim(), noteInput.value.trim()); }
+        });
+      }
+
+      // ---------- 保存编辑 ----------
+      function saveEdit(originalIndex, newAmountStr, newNoteStr) {
+        var newAmount = parseFloat(newAmountStr);
+        if (isNaN(newAmount) || newAmount <= 0) return; // 无效金额不保存
+
+        var oldRecord = history[originalIndex];
+        var oldAmount = oldRecord.amount;
+
+        // 更新记录
+        history[originalIndex].amount = newAmount;
+        history[originalIndex].note = newNoteStr !== "" ? newNoteStr : "未备注";
+
+        // 更新总支出
+        total = total - oldAmount + newAmount;
+        total = parseFloat(total.toFixed(2));
+        if (total < 0) total = 0;
+
+        saveToStorage();
+        updateDisplay();
+        renderHistoryList();
+      }
+
       // ---------- 渲染历史列表 ----------
       function renderHistoryList() {
         historyList.innerHTML = "";
@@ -927,6 +1203,9 @@
         var reversed = history.slice().reverse();
         for (var i = 0; i < reversed.length; i++) {
           var record = reversed[i];
+          // 计算原始索引（在原始 history 数组中的位置）
+          var originalIndex = history.length - 1 - i;
+
           var itemDiv = document.createElement("div");
           itemDiv.className = "history-item";
 
@@ -948,7 +1227,31 @@
           timeSpan.className = "history-item-time";
           timeSpan.textContent = record.time;
 
+          // 操作按钮组
+          var actionsDiv = document.createElement("div");
+          actionsDiv.className = "history-item-actions";
+
+          var editBtn = document.createElement("button");
+          editBtn.className = "history-action-btn";
+          editBtn.textContent = "✏️";
+          editBtn.title = "编辑";
+          editBtn.addEventListener("click", function (idx, div) {
+            return function (e) { e.stopPropagation(); startEdit(idx, div); };
+          }(originalIndex, itemDiv));
+
+          var deleteBtn = document.createElement("button");
+          deleteBtn.className = "history-action-btn delete-btn";
+          deleteBtn.textContent = "🗑️";
+          deleteBtn.title = "删除";
+          deleteBtn.addEventListener("click", function (idx) {
+            return function (e) { e.stopPropagation(); deleteRecord(idx); };
+          }(originalIndex));
+
+          actionsDiv.appendChild(editBtn);
+          actionsDiv.appendChild(deleteBtn);
+
           itemDiv.appendChild(leftDiv);
+          itemDiv.appendChild(actionsDiv);
           itemDiv.appendChild(timeSpan);
           historyList.appendChild(itemDiv);
         }
@@ -975,6 +1278,15 @@
       historyModal.addEventListener("click", function (e) {
         if (e.target === historyModal) {
           closeHistoryModal();
+        }
+      });
+
+      // 清零确认弹窗事件
+      resetConfirmBtn.addEventListener("click", confirmReset);
+      resetCancelBtn.addEventListener("click", closeResetConfirmModal);
+      resetConfirmModal.addEventListener("click", function (e) {
+        if (e.target === resetConfirmModal) {
+          closeResetConfirmModal();
         }
       });
 
