@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <title>极简记账本 V1.7.3</title>
+  <title>极简记账本 V1.7.4</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
   <link rel="icon" type="image/png" href="icon.png">
@@ -931,14 +931,16 @@
           try {
             var parsed = JSON.parse(storedHistory);
             if (Array.isArray(parsed)) {
-              var today = getDateString();
-              // 自动迁移旧格式（纯数字数组 -> 对象数组；缺date字段 -> 补today）
+              // 用最后记录日期做迁移基准（避免旧记录被洗成今天）
+              var storedLastDate = localStorage.getItem(LAST_DATE_KEY);
+              var migrationDate = storedLastDate !== null ? storedLastDate : getDateString();
+              // 自动迁移旧格式（纯数字数组 -> 对象数组；缺date字段 -> 补 migrationDate）
               history = parsed.map(function (v) {
                 if (typeof v === "number") {
-                  return { amount: v, note: "未备注", time: "--:--", date: today };
+                  return { amount: v, note: "未备注", time: "--:--", date: migrationDate };
                 }
                 if (v && typeof v.amount === "number") {
-                  if (!v.date) { v.date = today; }
+                  if (!v.date) { v.date = migrationDate; }
                   if (!v.note) { v.note = "未备注"; }
                   if (!v.time) { v.time = "--:--"; }
                   return v;
@@ -959,8 +961,7 @@
           }
         }
         total = parseFloat(total.toFixed(2));
-        // 跨天自动清零：检查最后记录日期
-        var storedLastDate = localStorage.getItem(LAST_DATE_KEY);
+        // 跨天自动清零：检查最后记录日期（复用上面已读的 storedLastDate）
         if (storedLastDate !== null && storedLastDate !== today) {
           // 跨天了：total 已通过 today-matching 重算为 0，历史记录保留供统计使用
           // 预算保留不变（沿用昨日预算）
