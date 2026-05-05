@@ -1,5 +1,5 @@
 /* ==========================================
-   极简记账本 V1.6.0 — Service Worker
+   极简记账本 V1.7.0 — Service Worker
    缓存优先 (Cache First) 策略
 ========================================== */
 
@@ -10,6 +10,7 @@ const CACHE_VERSION = 'cache-v' + new Date().getTime();
 var CORE_FILES = [
   "./",
   "index.html",
+  "stats.html",
   "manifest.json",
   "icon.png"
 ];

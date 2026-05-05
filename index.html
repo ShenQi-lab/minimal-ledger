@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <title>极简记账本 V1.6.0</title>
+  <title>极简记账本 V1.7.0</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
   <link rel="icon" type="image/png" href="icon.png">
@@ -40,18 +40,17 @@
       background-color: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      padding-bottom: 64px;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
       -webkit-user-select: none;
     }
 
-    .container {
+    .page {
       width: 100%;
       max-width: 420px;
-      padding: 40px 28px 48px;
+      margin: 0 auto;
+      padding: 40px 28px 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -636,10 +635,54 @@
       line-height: 1.6;
     }
 
+    /* ---------- 底部导航栏 ---------- */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 420px;
+      height: 56px;
+      background: #fff;
+      border-top: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 90;
+      box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: #b0b0b0;
+      font-size: 0.7rem;
+      padding: 4px 16px;
+      transition: color 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+      text-decoration: none;
+    }
+
+    .nav-item .nav-icon {
+      font-size: 1.35rem;
+      line-height: 1;
+    }
+
+    .nav-item.active {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
     /* ========== 移动端优化 ========== */
     @media (max-width: 480px) {
-      .container {
-        padding: 28px 18px 36px;
+      .page {
+        padding: 28px 18px 20px;
         gap: 24px;
       }
 
@@ -680,7 +723,7 @@
 </head>
 <body>
 
-  <div class="container">
+  <div class="page" id="ledgerPage">
     <!-- 标题 -->
     <div class="header-row">
       <h1 class="title">极简记账本</h1>
@@ -778,6 +821,18 @@
     <p class="hint">数据自动保存到浏览器 · 刷新/关闭后记录不丢失 · 按回车快速记账 · 支持离线使用</p>
   </div>
 
+  <!-- 底部导航栏 -->
+  <nav class="bottom-nav">
+    <a class="nav-item active" href="index.html" id="navLedger">
+      <span class="nav-icon">📝</span>
+      <span>记账</span>
+    </a>
+    <a class="nav-item" href="stats.html" id="navStats">
+      <span class="nav-icon">📊</span>
+      <span>统计</span>
+    </a>
+  </nav>
+
   <!-- Service Worker 注册 -->
   <script>
     if ("serviceWorker" in navigator) {
@@ -829,6 +884,15 @@
       let history = [];
       let budget = null;      // null 表示未设置
 
+      // ---------- 获取当前日期字符串 YYYY-MM-DD ----------
+      function getDateString() {
+        var now = new Date();
+        var y = now.getFullYear();
+        var m = (now.getMonth() + 1).toString().padStart(2, "0");
+        var d = now.getDate().toString().padStart(2, "0");
+        return y + "-" + m + "-" + d;
+      }
+
       // ---------- 获取当前时间字符串 ----------
       function getTimeString() {
         var now = new Date();
@@ -838,27 +902,29 @@
         return h + ":" + m + ":" + s;
       }
 
+      // ---------- 是否为今天的记录 ----------
+      function isTodayRecord(record) {
+        return record.date === getDateString();
+      }
+
       // ---------- 从 localStorage 读取初始值 ----------
       function loadFromStorage() {
-        var stored = localStorage.getItem(STORAGE_KEY);
-        if (stored !== null) {
-          var num = parseFloat(stored);
-          if (!isNaN(num) && num >= 0) {
-            total = num;
-          }
-        }
         // 读取历史记录
         var storedHistory = localStorage.getItem(HISTORY_KEY);
         if (storedHistory !== null) {
           try {
             var parsed = JSON.parse(storedHistory);
             if (Array.isArray(parsed)) {
-              // 自动迁移旧格式（纯数字数组 -> 对象数组）
+              var today = getDateString();
+              // 自动迁移旧格式（纯数字数组 -> 对象数组；缺date字段 -> 补today）
               history = parsed.map(function (v) {
                 if (typeof v === "number") {
-                  return { amount: v, note: "未备注", time: "--:--" };
+                  return { amount: v, note: "未备注", time: "--:--", date: today };
                 }
                 if (v && typeof v.amount === "number") {
+                  if (!v.date) { v.date = today; }
+                  if (!v.note) { v.note = "未备注"; }
+                  if (!v.time) { v.time = "--:--"; }
                   return v;
                 }
                 return null;
@@ -868,6 +934,15 @@
             history = [];
           }
         }
+        // 重算今日总支出
+        total = 0;
+        var today = getDateString();
+        for (var i = 0; i < history.length; i++) {
+          if (history[i].date === today) {
+            total += history[i].amount;
+          }
+        }
+        total = parseFloat(total.toFixed(2));
         // 读取预算
         var storedBudget = localStorage.getItem(BUDGET_KEY);
         if (storedBudget !== null) {
@@ -938,8 +1013,8 @@
 
         // 累加
         total += num;
-        // 记录到历史栈（对象格式）
-        history.push({ amount: num, note: noteText, time: timeStr });
+        // 记录到历史栈（对象格式，含日期）
+        history.push({ amount: num, note: noteText, time: timeStr, date: getDateString() });
         saveToStorage();
         updateDisplay();
         triggerBounceAnimation("bounce");
@@ -950,15 +1025,21 @@
         amountInput.focus();
       }
 
-      // ---------- 撤销上一笔 ----------
+      // ---------- 撤销上一笔（仅限今日记录） ----------
       function undoLast() {
-        if (history.length === 0) return; // 无记录可撤销
-        var lastRecord = history.pop();
-        total -= lastRecord.amount;
-        total = parseFloat(total.toFixed(2));
-        saveToStorage();
-        updateDisplay();
-        triggerBounceAnimation("reset-flash");
+        if (history.length === 0) return;
+        // 从后往前找今天的第一条记录
+        for (var i = history.length - 1; i >= 0; i--) {
+          if (isTodayRecord(history[i])) {
+            var removed = history.splice(i, 1)[0];
+            total -= removed.amount;
+            total = parseFloat(total.toFixed(2));
+            saveToStorage();
+            updateDisplay();
+            triggerBounceAnimation("reset-flash");
+            return;
+          }
+        }
       }
 
       // ---------- 清零（弹出确认弹窗） ----------
@@ -1189,10 +1270,20 @@
         renderHistoryList();
       }
 
-      // ---------- 渲染历史列表 ----------
+      // ---------- 渲染历史列表（仅显示今日记录） ----------
       function renderHistoryList() {
         historyList.innerHTML = "";
-        if (history.length === 0) {
+        // 筛选今日记录
+        var today = getDateString();
+        var todayRecords = [];
+        var todayIndices = [];
+        for (var idx = 0; idx < history.length; idx++) {
+          if (history[idx].date === today) {
+            todayRecords.push(history[idx]);
+            todayIndices.push(idx);
+          }
+        }
+        if (todayRecords.length === 0) {
           var emptyDiv = document.createElement("div");
           emptyDiv.className = "history-empty";
           emptyDiv.textContent = "今日暂无记录";
@@ -1200,11 +1291,11 @@
           return;
         }
         // 时间倒序（最新记录在上）
-        var reversed = history.slice().reverse();
+        var reversed = todayRecords.slice().reverse();
+        var reversedIndices = todayIndices.slice().reverse();
         for (var i = 0; i < reversed.length; i++) {
           var record = reversed[i];
-          // 计算原始索引（在原始 history 数组中的位置）
-          var originalIndex = history.length - 1 - i;
+          var originalIndex = reversedIndices[i];
 
           var itemDiv = document.createElement("div");
           itemDiv.className = "history-item";

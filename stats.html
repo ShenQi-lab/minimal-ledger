@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <title>极简记账本 - 统计 V1.7.0</title>
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icon.png">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #2c2c2c;
+      --text-light: #666666;
+      --accent: #FF8C42;
+      --accent-hover: #e67830;
+      --radius: 12px;
+      --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial,
+        sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 64px;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 40px 28px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    /* ---------- 标题 ---------- */
+    .stats-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-light);
+      letter-spacing: 0.05em;
+      text-align: center;
+    }
+
+    /* ---------- 月份切换器 ---------- */
+    .month-switcher {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .month-arrow {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 50%;
+      background: #f0f0f0;
+      color: #555;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease, transform 0.1s ease;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .month-arrow:hover {
+      background: #e0e0e0;
+    }
+
+    .month-arrow:active {
+      transform: scale(0.9);
+    }
+
+    .month-arrow:disabled {
+      opacity: 0.3;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .month-label {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--text);
+      min-width: 100px;
+      text-align: center;
+    }
+
+    /* ---------- 统计卡片 ---------- */
+    .stats-cards {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .stat-card {
+      flex: 1;
+      background: #fafafa;
+      border-radius: var(--radius);
+      padding: 18px 14px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-card-label {
+      font-size: 0.82rem;
+      color: var(--text-light);
+      margin-bottom: 6px;
+    }
+
+    .stat-card-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .stat-card-value.increase {
+      color: #e04848;
+    }
+
+    .stat-card-value.decrease {
+      color: #2eaa6e;
+    }
+
+    /* ---------- 折线图容器 ---------- */
+    .chart-wrapper {
+      width: 100%;
+      background: #fafafa;
+      border-radius: var(--radius);
+      padding: 16px 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .chart-wrapper canvas {
+      width: 100% !important;
+      height: 220px !important;
+    }
+
+    .chart-empty {
+      text-align: center;
+      color: #b0b0b0;
+      font-size: 0.9rem;
+      padding: 60px 0;
+    }
+
+    /* ---------- 底部导航栏 ---------- */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 420px;
+      height: 56px;
+      background: #fff;
+      border-top: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 90;
+      box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: #b0b0b0;
+      font-size: 0.7rem;
+      padding: 4px 16px;
+      transition: color 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+      text-decoration: none;
+    }
+
+    .nav-item .nav-icon {
+      font-size: 1.35rem;
+      line-height: 1;
+    }
+
+    .nav-item.active {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ========== 移动端优化 ========== */
+    @media (max-width: 480px) {
+      .page {
+        padding: 28px 18px 20px;
+        gap: 20px;
+      }
+
+      .stat-card-value {
+        font-size: 1.35rem;
+      }
+
+      .chart-wrapper canvas {
+        height: 180px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page" id="statsPage">
+    <!-- 标题 -->
+    <h1 class="stats-title">月度统计</h1>
+
+    <!-- 月份切换 -->
+    <div class="month-switcher">
+      <button class="month-arrow" id="prevMonthBtn" title="上一个月">◀</button>
+      <span class="month-label" id="monthLabel">2026年5月</span>
+      <button class="month-arrow" id="nextMonthBtn" title="下一个月">▶</button>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="stats-cards">
+      <div class="stat-card">
+        <div class="stat-card-label">本月总支出</div>
+        <div class="stat-card-value" id="monthTotal">0元</div>
+      </div>
+      <div class="stat-card" id="compareCard">
+        <div class="stat-card-label">较上月</div>
+        <div class="stat-card-value" id="monthCompare">--</div>
+      </div>
+    </div>
+
+    <!-- 折线图 -->
+    <div class="chart-wrapper" id="chartWrapper">
+      <canvas id="dailyChart"></canvas>
+      <div class="chart-empty hidden" id="chartEmpty">本月暂无记录</div>
+    </div>
+  </div>
+
+  <!-- 底部导航栏 -->
+  <nav class="bottom-nav">
+    <a class="nav-item" href="index.html" id="navLedger">
+      <span class="nav-icon">📝</span>
+      <span>记账</span>
+    </a>
+    <a class="nav-item active" href="stats.html" id="navStats">
+      <span class="nav-icon">📊</span>
+      <span>统计</span>
+    </a>
+  </nav>
+
+  <!-- Service Worker 注册 -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("./sw.js").then(function (registration) {
+          console.log("[极简记账本] Service Worker 注册成功，scope:", registration.scope);
+        }).catch(function (err) {
+          console.error("[极简记账本] Service Worker 注册失败:", err);
+        });
+      });
+    }
+  </script>
+
+  <script>
+    (function () {
+      // ---------- DOM 元素 ----------
+      const monthLabel = document.getElementById("monthLabel");
+      const prevMonthBtn = document.getElementById("prevMonthBtn");
+      const nextMonthBtn = document.getElementById("nextMonthBtn");
+      const monthTotalEl = document.getElementById("monthTotal");
+      const monthCompareEl = document.getElementById("monthCompare");
+      const chartWrapper = document.getElementById("chartWrapper");
+      const chartEmpty = document.getElementById("chartEmpty");
+      const canvas = document.getElementById("dailyChart");
+      const ctx = canvas.getContext("2d");
+
+      // ---------- localStorage key ----------
+      const HISTORY_KEY = "minimal_ledger_history";
+
+      // ---------- 状态 ----------
+      let currentYear = new Date().getFullYear();
+      let currentMonth = new Date().getMonth() + 1; // 1-12
+      let chart = null;
+
+      // ---------- 格式化金额 ----------
+      function formatAmount(value) {
+        return parseFloat(value.toFixed(2));
+      }
+
+      // ---------- 读取所有历史记录 ----------
+      function loadHistory() {
+        var stored = localStorage.getItem(HISTORY_KEY);
+        if (stored === null) return [];
+        try {
+          var parsed = JSON.parse(stored);
+          if (!Array.isArray(parsed)) return [];
+          return parsed.filter(function (v) {
+            return v && typeof v.amount === "number" && typeof v.date === "string";
+          });
+        } catch (e) {
+          return [];
+        }
+      }
+
+      // ---------- 获取某年某月的日期范围 ----------
+      function getMonthDates(year, month) {
+        var daysInMonth = new Date(year, month, 0).getDate(); // month is 1-indexed, this trick works
+        var dates = [];
+        for (var d = 1; d <= daysInMonth; d++) {
+          var m = month.toString().padStart(2, "0");
+          var day = d.toString().padStart(2, "0");
+          dates.push(year + "-" + m + "-" + day);
+        }
+        return dates;
+      }
+
+      // ---------- 汇总某月每日支出 ----------
+      function aggregateByDay(year, month) {
+        var dates = getMonthDates(year, month);
+        var dailyMap = {};
+        for (var i = 0; i < dates.length; i++) {
+          dailyMap[dates[i]] = 0;
+        }
+        var history = loadHistory();
+        var monthPrefix = year + "-" + month.toString().padStart(2, "0") + "-";
+        for (var j = 0; j < history.length; j++) {
+          var record = history[j];
+          if (record.date.indexOf(monthPrefix) === 0 && dailyMap.hasOwnProperty(record.date)) {
+            dailyMap[record.date] += record.amount;
+          }
+        }
+        // 转为数组，按日期排序
+        var result = [];
+        for (var k = 0; k < dates.length; k++) {
+          result.push({
+            date: dates[k],
+            day: parseInt(dates[k].split("-")[2], 10),
+            amount: formatAmount(dailyMap[dates[k]])
+          });
+        }
+        return result;
+      }
+
+      // ---------- 计算某月总支出 ----------
+      function getMonthTotal(year, month) {
+        var daily = aggregateByDay(year, month);
+        var total = 0;
+        for (var i = 0; i < daily.length; i++) {
+          total += daily[i].amount;
+        }
+        return formatAmount(total);
+      }
+
+      // ---------- 获取所有有记录的月份 ----------
+      function getAvailableMonths() {
+        var history = loadHistory();
+        var monthSet = {};
+        for (var i = 0; i < history.length; i++) {
+          var d = history[i].date;
+          if (typeof d === "string" && d.length >= 7) {
+            var ym = d.substring(0, 7); // "YYYY-MM"
+            monthSet[ym] = true;
+          }
+        }
+        var months = Object.keys(monthSet).sort(); // 正序排列
+        return months;
+      }
+
+      // ---------- 判断是否可以切换到某个月 ----------
+      function canGoToPrev() {
+        var available = getAvailableMonths();
+        if (available.length === 0) return false;
+        var currentYM = currentYear + "-" + currentMonth.toString().padStart(2, "0");
+        // 如果当前月不在可用月份中，查找最接近的前一个月份
+        for (var i = available.length - 1; i >= 0; i--) {
+          if (available[i] < currentYM) return true;
+        }
+        return false;
+      }
+
+      function canGoToNext() {
+        var available = getAvailableMonths();
+        if (available.length === 0) return false;
+        var today = new Date();
+        var nowYM = today.getFullYear() + "-" + (today.getMonth() + 1).toString().padStart(2, "0");
+        var currentYM = currentYear + "-" + currentMonth.toString().padStart(2, "0");
+        return currentYM < nowYM;
+      }
+
+      // ---------- 切换到上一个月 ----------
+      function goToPrevMonth() {
+        var available = getAvailableMonths();
+        if (available.length === 0) return;
+        var currentYM = currentYear + "-" + currentMonth.toString().padStart(2, "0");
+        // 在可用月份中找到 < currentYM 的最大值
+        var best = null;
+        for (var i = 0; i < available.length; i++) {
+          if (available[i] < currentYM) {
+            best = available[i];
+          }
+        }
+        if (best !== null) {
+          var parts = best.split("-");
+          currentYear = parseInt(parts[0], 10);
+          currentMonth = parseInt(parts[1], 10);
+          renderAll();
+        }
+      }
+
+      // ---------- 切换到下一个月 ----------
+      function goToNextMonth() {
+        var today = new Date();
+        var nowYM = today.getFullYear() + "-" + (today.getMonth() + 1).toString().padStart(2, "0");
+        var currentYM = currentYear + "-" + currentMonth.toString().padStart(2, "0");
+        if (currentYM >= nowYM) return; // 不能超过当前月
+        // 直接 +1 月
+        if (currentMonth === 12) {
+          currentYear++;
+          currentMonth = 1;
+        } else {
+          currentMonth++;
+        }
+        renderAll();
+      }
+
+      // ---------- 更新统计卡片 ----------
+      function updateStatsCards() {
+        var monthTotal = getMonthTotal(currentYear, currentMonth);
+        monthTotalEl.textContent = monthTotal + "元";
+
+        // 计算上月总支出
+        var prevYear = currentYear;
+        var prevMonth = currentMonth - 1;
+        if (prevMonth === 0) {
+          prevYear = currentYear - 1;
+          prevMonth = 12;
+        }
+        var prevTotal = getMonthTotal(prevYear, prevMonth);
+
+        var compareCard = document.getElementById("compareCard");
+        if (prevTotal === 0 && monthTotal === 0) {
+          monthCompareEl.textContent = "--";
+          monthCompareEl.className = "stat-card-value";
+        } else if (prevTotal === 0) {
+          monthCompareEl.textContent = "上月无记录";
+          monthCompareEl.className = "stat-card-value increase";
+        } else {
+          var diff = formatAmount(monthTotal - prevTotal);
+          var pct = formatAmount(Math.abs((monthTotal - prevTotal) / prevTotal) * 100);
+          var sign = diff >= 0 ? "+" : "";
+          var arrow = diff >= 0 ? "↑" : "↓";
+          monthCompareEl.textContent = sign + diff + "元 " + arrow + pct + "%";
+          monthCompareEl.className = "stat-card-value " + (diff >= 0 ? "increase" : "decrease");
+        }
+      }
+
+      // ---------- 更新折线图 ----------
+      function updateChart() {
+        var daily = aggregateByDay(currentYear, currentMonth);
+        var labels = [];
+        var data = [];
+        for (var i = 0; i < daily.length; i++) {
+          labels.push(daily[i].day + "日");
+          data.push(daily[i].amount);
+        }
+
+        // 检查是否有非零数据
+        var hasData = false;
+        for (var j = 0; j < data.length; j++) {
+          if (data[j] > 0) { hasData = true; break; }
+        }
+
+        if (!hasData) {
+          // 无数据
+          canvas.style.display = "none";
+          chartEmpty.classList.remove("hidden");
+          if (chart) { chart.destroy(); chart = null; }
+          return;
+        }
+
+        canvas.style.display = "block";
+        chartEmpty.classList.add("hidden");
+
+        if (chart) { chart.destroy(); chart = null; }
+
+        chart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [{
+              label: "日支出 (元)",
+              data: data,
+              borderColor: "#FF8C42",
+              backgroundColor: "rgba(255, 140, 66, 0.08)",
+              borderWidth: 2,
+              fill: true,
+              tension: 0.3,
+              pointRadius: function (ctx) {
+                return ctx.raw > 0 ? 3 : 0;
+              },
+              pointBackgroundColor: "#FF8C42",
+              pointBorderColor: "#fff",
+              pointBorderWidth: 1.5,
+              pointHoverRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                backgroundColor: "#2c2c2c",
+                titleColor: "#fff",
+                bodyColor: "#fff",
+                cornerRadius: 6,
+                padding: 10,
+                callbacks: {
+                  label: function (ctx) {
+                    return ctx.parsed.y + " 元";
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: {
+                  display: false
+                },
+                ticks: {
+                  font: { size: 11 },
+                  color: "#999",
+                  maxTicksLimit: 15
+                }
+              },
+              y: {
+                beginAtZero: true,
+                grid: {
+                  color: "#f0f0f0"
+                },
+                ticks: {
+                  font: { size: 11 },
+                  color: "#999",
+                  callback: function (value) {
+                    return value + "元";
+                  }
+                }
+              }
+            },
+            interaction: {
+              intersect: false,
+              mode: "index"
+            }
+          }
+        });
+
+        // 设置 canvas 高度
+        canvas.parentElement.style.height = "220px";
+      }
+
+      // ---------- 更新月份标签 ----------
+      function updateMonthLabel() {
+        monthLabel.textContent = currentYear + "年" + currentMonth + "月";
+        prevMonthBtn.disabled = !canGoToPrev();
+        nextMonthBtn.disabled = !canGoToNext();
+      }
+
+      // ---------- 渲染全部 ----------
+      function renderAll() {
+        updateMonthLabel();
+        updateStatsCards();
+        updateChart();
+      }
+
+      // ---------- 初始化：默认显示当前月 ----------
+      function init() {
+        var today = new Date();
+        currentYear = today.getFullYear();
+        currentMonth = today.getMonth() + 1;
+        renderAll();
+      }
+
+      // ---------- 事件绑定 ----------
+      prevMonthBtn.addEventListener("click", goToPrevMonth);
+      nextMonthBtn.addEventListener("click", goToNextMonth);
+
+      // ---------- 启动 ----------
+      init();
+    })();
+  </script>
+
+</body>
+</html>
