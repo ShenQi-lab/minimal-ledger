@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <title>极简记账本 V1.7.0</title>
+  <title>极简记账本 V1.7.1</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
   <link rel="icon" type="image/png" href="icon.png">
@@ -792,6 +792,18 @@
       </div>
     </div>
 
+    <!-- 撤销确认弹窗 -->
+    <div class="modal-overlay hidden" id="undoConfirmModal">
+      <div class="modal-box">
+        <div class="modal-title">确认撤销</div>
+        <div class="modal-desc">确定要撤销上一笔记录吗？</div>
+        <div class="modal-btns">
+          <button class="modal-btn modal-btn-cancel" id="undoCancelBtn">取消</button>
+          <button class="modal-btn modal-btn-danger" id="undoConfirmBtn">确认撤销</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 清零确认弹窗 -->
     <div class="modal-overlay hidden" id="resetConfirmModal">
       <div class="modal-box">
@@ -869,6 +881,9 @@
       const historyModal = document.getElementById("historyModal");
       const historyList = document.getElementById("historyList");
       const historyCloseBtn = document.getElementById("historyCloseBtn");
+      const undoConfirmModal = document.getElementById("undoConfirmModal");
+      const undoCancelBtn = document.getElementById("undoCancelBtn");
+      const undoConfirmBtn = document.getElementById("undoConfirmBtn");
       const resetConfirmModal = document.getElementById("resetConfirmModal");
       const resetCancelBtn = document.getElementById("resetCancelBtn");
       const resetConfirmBtn = document.getElementById("resetConfirmBtn");
@@ -1023,6 +1038,28 @@
         amountInput.value = "";
         noteInput.value = "";
         amountInput.focus();
+      }
+
+      // ---------- 撤销确认弹窗：打开 ----------
+      function openUndoConfirmModal() {
+        // 无今日记录时直接返回
+        var hasToday = false;
+        for (var i = history.length - 1; i >= 0; i--) {
+          if (isTodayRecord(history[i])) { hasToday = true; break; }
+        }
+        if (!hasToday) return;
+        undoConfirmModal.classList.remove("hidden");
+      }
+
+      // ---------- 撤销确认弹窗：关闭 ----------
+      function closeUndoConfirmModal() {
+        undoConfirmModal.classList.add("hidden");
+      }
+
+      // ---------- 确认撤销 ----------
+      function confirmUndo() {
+        closeUndoConfirmModal();
+        undoLast();
       }
 
       // ---------- 撤销上一笔（仅限今日记录） ----------
@@ -1350,7 +1387,7 @@
 
       // ---------- 按钮事件 ----------
       addBtn.addEventListener("click", addRecord);
-      undoBtn.addEventListener("click", undoLast);
+      undoBtn.addEventListener("click", openUndoConfirmModal);
       resetBtn.addEventListener("click", resetTotal);
       budgetSetBtn.addEventListener("click", openBudgetModal);
       budgetCancelBtn.addEventListener("click", closeBudgetModal);
@@ -1369,6 +1406,15 @@
       historyModal.addEventListener("click", function (e) {
         if (e.target === historyModal) {
           closeHistoryModal();
+        }
+      });
+
+      // 撤销确认弹窗事件
+      undoConfirmBtn.addEventListener("click", confirmUndo);
+      undoCancelBtn.addEventListener("click", closeUndoConfirmModal);
+      undoConfirmModal.addEventListener("click", function (e) {
+        if (e.target === undoConfirmModal) {
+          closeUndoConfirmModal();
         }
       });
 
