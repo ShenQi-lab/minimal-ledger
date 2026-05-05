@@ -961,11 +961,15 @@
           }
         }
         total = parseFloat(total.toFixed(2));
+        console.log('清零完成，当前 total:', total, 'history长度:', history.length);
         // 跨天自动清零：检查最后记录日期（复用上面已读的 storedLastDate）
+        console.log('进入跨天检测，最后记录日期:', storedLastDate, '今天日期:', today);
         if (storedLastDate !== null && storedLastDate !== today) {
+          console.log('检测到跨天，开始执行清零...');
           // 跨天了：total 已通过 today-matching 重算为 0，历史记录保留供统计使用
           // 预算保留不变（沿用昨日预算）
           localStorage.setItem(LAST_DATE_KEY, today);
+          console.log('localStorage 已更新');
         } else if (storedLastDate === null) {
           // 首次使用，初始化最后记录日期
           localStorage.setItem(LAST_DATE_KEY, today);
@@ -1467,6 +1471,7 @@
       // ---------- 页面初始化：读取存储并显示 ----------
       loadFromStorage();
       updateDisplay();
+      console.log('页面已刷新');
 
       // ---------- 阻止移动端双击缩放（在 display-area 上） ----------
       displayAreaEl.addEventListener(
