@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <title>极简记账本 - 统计 V1.8.0</title>
+  <title>极简记账本 - 统计 V1.9.0</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
   <link rel="icon" type="image/png" href="icon.png">
@@ -37,8 +37,8 @@
       min-height: 100vh;
       padding-bottom: 64px;
       -webkit-tap-highlight-color: transparent;
-      user-select: none;
       -webkit-user-select: none;
+      user-select: none;
     }
 
     .page {
@@ -68,7 +68,6 @@
       gap: 20px;
       width: 100%;
       justify-content: center;
-      position: relative;
     }
 
     .month-arrow {
@@ -109,19 +108,6 @@
       min-width: 100px;
       text-align: center;
       cursor: pointer;
-      padding: 4px 8px;
-      border-radius: 6px;
-      transition: background 0.15s ease;
-    }
-
-    .month-label:hover {
-      background: #f5f5f5;
-    }
-
-    .month-label::after {
-      content: " ▾";
-      font-size: 0.75rem;
-      color: #999;
     }
 
     /* ---------- 月份面板 ---------- */
@@ -132,7 +118,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 110;
+      z-index: 100;
       animation: fadeIn 0.18s ease;
     }
 
@@ -148,40 +134,37 @@
     .month-panel-box {
       background: #fff;
       border-radius: var(--radius);
-      padding: 20px 16px;
-      width: 260px;
+      padding: 24px;
+      width: 300px;
       max-width: 90vw;
       max-height: 60vh;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-      display: flex;
-      flex-direction: column;
     }
 
     .month-panel-title {
-      font-size: 0.95rem;
+      font-size: 1.05rem;
       font-weight: 600;
       color: var(--text);
-      margin-bottom: 12px;
+      margin-bottom: 16px;
       text-align: center;
-      flex-shrink: 0;
     }
 
     .month-panel-list {
-      flex: 1;
-      overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 4px;
+      max-height: 40vh;
+      overflow-y: auto;
     }
 
     .month-panel-item {
       padding: 10px 14px;
       border-radius: 8px;
+      cursor: pointer;
       font-size: 0.95rem;
       color: var(--text);
-      cursor: pointer;
+      transition: background 0.12s ease;
       text-align: center;
-      transition: background 0.12s ease, color 0.12s ease;
     }
 
     .month-panel-item:hover {
@@ -189,7 +172,7 @@
     }
 
     .month-panel-item.active {
-      background: #fff5ee;
+      background: #fff3eb;
       color: var(--accent);
       font-weight: 600;
     }
@@ -251,44 +234,26 @@
       padding: 60px 0;
     }
 
-    /* ---------- 每日明细列表 ---------- */
+    /* ---------- 每日明细 ---------- */
     .daily-detail-section {
       width: 100%;
-      background: #fafafa;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
     }
 
     .daily-detail-summary {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 14px 16px;
-      cursor: pointer;
       font-size: 0.9rem;
       color: var(--text-light);
-      transition: background 0.12s ease;
-    }
-
-    .daily-detail-summary:hover {
-      background: #f0f0f0;
-    }
-
-    .daily-detail-summary.empty {
-      color: #b0b0b0;
-      cursor: default;
-    }
-
-    .daily-detail-summary.empty:hover {
-      background: transparent;
+      text-align: center;
+      padding: 8px 0;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .daily-detail-list {
-      max-height: 280px;
-      overflow-y: auto;
-      border-top: 1px solid #eee;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
     }
 
     .daily-detail-list.hidden {
@@ -299,48 +264,42 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 16px;
-      font-size: 0.88rem;
-      border-bottom: 1px solid #f0f0f0;
-      transition: background 0.1s ease;
-    }
-
-    .daily-item:last-child {
-      border-bottom: none;
-      padding-bottom: 14px;
-    }
-
-    .daily-item.has-spending {
+      padding: 10px 14px;
+      background: #fafafa;
+      border-radius: 8px;
       cursor: pointer;
+      transition: background 0.12s ease;
+      font-size: 0.9rem;
     }
 
-    .daily-item.has-spending:hover {
-      background: #fff5ee;
+    .daily-item:hover {
+      background: #f0f0f0;
+    }
+
+    .daily-item:active {
+      background: #e8e8e8;
     }
 
     .daily-item-date {
+      font-weight: 500;
       color: var(--text);
     }
 
     .daily-item-amount {
+      font-weight: 600;
+      color: var(--accent);
       display: flex;
       align-items: center;
       gap: 4px;
-      font-weight: 600;
     }
 
     .daily-item-amount.zero {
-      color: #bbb;
-      font-weight: 400;
-    }
-
-    .daily-item-amount.spending {
-      color: var(--accent);
+      color: #b0b0b0;
     }
 
     .daily-item-arrow {
-      font-size: 0.75rem;
-      color: #ccc;
+      font-size: 0.7rem;
+      color: #b0b0b0;
     }
 
     /* ---------- 日明细浮层 ---------- */
@@ -351,7 +310,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 120;
+      z-index: 100;
       animation: fadeIn 0.18s ease;
     }
 
@@ -369,6 +328,8 @@
       display: flex;
       flex-direction: column;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+      user-select: auto;
+      -webkit-user-select: auto;
     }
 
     .day-detail-header {
@@ -411,6 +372,7 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+      margin-bottom: 14px;
     }
 
     .day-record-item {
@@ -449,6 +411,166 @@
       font-size: 0.8rem;
       white-space: nowrap;
       margin-left: 10px;
+    }
+
+    /* ---------- 日明细浮层：操作按钮 ---------- */
+    .day-record-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 6px;
+      flex-shrink: 0;
+    }
+
+    .day-record-action-btn {
+      width: 26px;
+      height: 26px;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s ease;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+      color: #999;
+    }
+
+    .day-record-action-btn:hover {
+      background: #e8e8e8;
+      color: #555;
+    }
+
+    .day-record-action-btn:active {
+      transform: scale(0.88);
+      background: #ddd;
+    }
+
+    .day-record-action-btn.delete-btn:hover {
+      background: #fee;
+      color: #d44;
+    }
+
+    /* ---------- 日明细浮层：编辑态 ---------- */
+    .day-record-edit-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .day-record-edit-date-label {
+      font-size: 0.82rem;
+      color: var(--text);
+      font-weight: 500;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .day-record-edit-input {
+      border: 1.5px solid var(--input-border, #d5d5d5);
+      border-radius: 5px;
+      padding: 3px 6px;
+      font-size: 0.82rem;
+      outline: none;
+      width: 60px;
+      text-align: center;
+      transition: border-color 0.15s ease;
+      -webkit-appearance: none;
+    }
+
+    .day-record-edit-input:focus {
+      border-color: var(--accent);
+    }
+
+    .day-record-edit-input.note-input {
+      flex: 1;
+      min-width: 50px;
+      text-align: left;
+    }
+
+    .day-record-edit-input.time-input {
+      width: 80px;
+      text-align: center;
+    }
+
+    .day-record-edit-input:placeholder-shown {
+      color: #b0b0b0;
+    }
+
+    .day-record-edit-save {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .day-record-edit-save:hover {
+      background: var(--accent-hover);
+    }
+
+    .day-record-edit-save:active {
+      transform: scale(0.9);
+    }
+
+    .day-record-edit-cancel {
+      width: 26px;
+      height: 26px;
+      border: none;
+      border-radius: 50%;
+      background: #e8e8e8;
+      color: #777;
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .day-record-edit-cancel:hover {
+      background: hsl(0, 0%, 84%);
+    }
+
+    /* ---------- 日明细浮层："+ 记一笔"按钮 ---------- */
+    .day-detail-add-btn {
+      width: 100%;
+      height: 40px;
+      border: 1.5px dashed var(--accent);
+      border-radius: 8px;
+      background: #fff8f3;
+      color: var(--accent);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .day-detail-add-btn:hover {
+      background: #fff0e6;
+    }
+
+    .day-detail-add-btn:active {
+      transform: scale(0.97);
+      background: #ffe8d6;
     }
 
     /* ---------- 底部导航栏 ---------- */
@@ -543,20 +665,10 @@
       <div class="chart-empty hidden" id="chartEmpty">本月暂无记录</div>
     </div>
 
-    <!-- 每日明细列表 -->
-    <div class="daily-detail-section" id="dailyDetailSection">
-      <div class="daily-detail-summary" id="dailyDetailSummary">
-        ▼ 查看每日明细（已消费 0 天）
-      </div>
+    <!-- 每日明细 -->
+    <div class="daily-detail-section">
+      <div class="daily-detail-summary" id="dailyDetailSummary">▼ 查看每日明细</div>
       <div class="daily-detail-list hidden" id="dailyDetailList"></div>
-    </div>
-
-    <!-- 月份面板弹窗 -->
-    <div class="month-panel-overlay hidden" id="monthPanelOverlay">
-      <div class="month-panel-box">
-        <div class="month-panel-title">选择月份</div>
-        <div class="month-panel-list" id="monthPanelList"></div>
-      </div>
     </div>
 
     <!-- 日明细浮层 -->
@@ -567,6 +679,15 @@
           <button class="day-detail-close" id="dayDetailCloseBtn">✕</button>
         </div>
         <div class="day-detail-list" id="dayDetailList"></div>
+        <button class="day-detail-add-btn" id="dayDetailAddBtn">+ 记一笔</button>
+      </div>
+    </div>
+
+    <!-- 月份面板 -->
+    <div class="month-panel-overlay hidden" id="monthPanelOverlay">
+      <div class="month-panel-box">
+        <div class="month-panel-title">选择月份</div>
+        <div class="month-panel-list" id="monthPanelList"></div>
       </div>
     </div>
   </div>
@@ -586,32 +707,9 @@
   <!-- Service Worker 注册 -->
   <script>
     if ("serviceWorker" in navigator) {
-      // 检测 SW 更新后自动刷新页面
-      var refreshing = false;
-      navigator.serviceWorker.addEventListener("controllerchange", function () {
-        if (refreshing) return;
-        refreshing = true;
-        window.location.reload();
-      });
-
       window.addEventListener("load", function () {
         navigator.serviceWorker.register("./sw.js").then(function (registration) {
           console.log("[极简记账本] Service Worker 注册成功，scope:", registration.scope);
-          // 如果 SW 已更新但尚未激活，主动发送 skipWaiting 消息
-          if (registration.waiting) {
-            registration.waiting.postMessage({ type: "SKIP_WAITING" });
-          }
-          registration.addEventListener("updatefound", function () {
-            var newWorker = registration.installing;
-            if (newWorker) {
-              newWorker.addEventListener("statechange", function () {
-                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-                  // 新 SW 已安装完毕，发送 skipWaiting 并等待 controllerchange 触发刷新
-                  newWorker.postMessage({ type: "SKIP_WAITING" });
-                }
-              });
-            }
-          });
         }).catch(function (err) {
           console.error("[极简记账本] Service Worker 注册失败:", err);
         });
@@ -631,21 +729,15 @@
       const chartEmpty = document.getElementById("chartEmpty");
       const canvas = document.getElementById("dailyChart");
       const ctx = canvas.getContext("2d");
-
-      // 月份面板
-      const monthPanelOverlay = document.getElementById("monthPanelOverlay");
-      const monthPanelList = document.getElementById("monthPanelList");
-
-      // 每日明细
-      const dailyDetailSection = document.getElementById("dailyDetailSection");
       const dailyDetailSummary = document.getElementById("dailyDetailSummary");
       const dailyDetailList = document.getElementById("dailyDetailList");
-
-      // 日明细浮层
       const dayDetailOverlay = document.getElementById("dayDetailOverlay");
       const dayDetailTitle = document.getElementById("dayDetailTitle");
       const dayDetailListEl = document.getElementById("dayDetailList");
       const dayDetailCloseBtn = document.getElementById("dayDetailCloseBtn");
+      const dayDetailAddBtn = document.getElementById("dayDetailAddBtn");
+      const monthPanelOverlay = document.getElementById("monthPanelOverlay");
+      const monthPanelList = document.getElementById("monthPanelList");
 
       // ---------- localStorage key ----------
       const HISTORY_KEY = "minimal_ledger_history";
@@ -653,8 +745,12 @@
       // ---------- 状态 ----------
       let currentYear = new Date().getFullYear();
       let currentMonth = new Date().getMonth() + 1; // 1-12
+      let dailyDetailExpanded = false;
       let chart = null;
-      let dailyDetailExpanded = false; // 明细列表是否展开
+      // 当前打开的日明细浮层对应的日期
+      let currentDayDetailDate = null;
+      // 浮层中正在添加新记录的状态标记
+      let isAddingNewRecord = false;
 
       // ---------- 格式化金额 ----------
       function formatAmount(value) {
@@ -674,6 +770,11 @@
         } catch (e) {
           return [];
         }
+      }
+
+      // ---------- 保存历史记录到 localStorage ----------
+      function saveHistory(historyArray) {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(historyArray));
       }
 
       // ---------- 获取某年某月的日期范围 ----------
@@ -745,7 +846,6 @@
         var available = getAvailableMonths();
         if (available.length === 0) return false;
         var currentYM = currentYear + "-" + currentMonth.toString().padStart(2, "0");
-        // 如果当前月不在可用月份中，查找最接近的前一个月份
         for (var i = available.length - 1; i >= 0; i--) {
           if (available[i] < currentYM) return true;
         }
@@ -766,7 +866,6 @@
         var available = getAvailableMonths();
         if (available.length === 0) return;
         var currentYM = currentYear + "-" + currentMonth.toString().padStart(2, "0");
-        // 在可用月份中找到 < currentYM 的最大值
         var best = null;
         for (var i = 0; i < available.length; i++) {
           if (available[i] < currentYM) {
@@ -787,8 +886,7 @@
         var today = new Date();
         var nowYM = today.getFullYear() + "-" + (today.getMonth() + 1).toString().padStart(2, "0");
         var currentYM = currentYear + "-" + currentMonth.toString().padStart(2, "0");
-        if (currentYM >= nowYM) return; // 不能超过当前月
-        // 直接 +1 月
+        if (currentYM >= nowYM) return;
         if (currentMonth === 12) {
           currentYear++;
           currentMonth = 1;
@@ -804,7 +902,6 @@
         var monthTotal = getMonthTotal(currentYear, currentMonth);
         monthTotalEl.textContent = monthTotal + "元";
 
-        // 计算上月总支出
         var prevYear = currentYear;
         var prevMonth = currentMonth - 1;
         if (prevMonth === 0) {
@@ -813,7 +910,6 @@
         }
         var prevTotal = getMonthTotal(prevYear, prevMonth);
 
-        var compareCard = document.getElementById("compareCard");
         if (prevTotal === 0 && monthTotal === 0) {
           monthCompareEl.textContent = "--";
           monthCompareEl.className = "stat-card-value";
@@ -840,14 +936,12 @@
           data.push(daily[i].amount);
         }
 
-        // 检查是否有非零数据
         var hasData = false;
         for (var j = 0; j < data.length; j++) {
           if (data[j] > 0) { hasData = true; break; }
         }
 
         if (!hasData) {
-          // 无数据
           canvas.style.display = "none";
           chartEmpty.classList.remove("hidden");
           if (chart) { chart.destroy(); chart = null; }
@@ -932,7 +1026,6 @@
           }
         });
 
-        // 设置 canvas 高度
         canvas.parentElement.style.height = "220px";
       }
 
@@ -946,58 +1039,46 @@
       // ---------- 渲染每日明细列表 ----------
       function renderDailyDetail() {
         var daily = aggregateByDay(currentYear, currentMonth);
-
-        // 统计有消费的天数
         var spendingDays = 0;
         for (var i = 0; i < daily.length; i++) {
           if (daily[i].amount > 0) spendingDays++;
         }
 
-        var monthStr = currentMonth + "月";
+        dailyDetailList.innerHTML = "";
 
         if (spendingDays === 0) {
-          // 无记录
-          dailyDetailSummary.textContent = "本月暂无记录";
-          dailyDetailSummary.className = "daily-detail-summary empty";
+          dailyDetailSummary.textContent = "▼ 每日明细（暂无消费记录）";
           dailyDetailSummary.style.cursor = "default";
           dailyDetailList.classList.add("hidden");
-        } else if (dailyDetailExpanded) {
-          // 展开状态
+          dailyDetailExpanded = false;
+          return;
+        }
+
+        if (dailyDetailExpanded) {
           dailyDetailSummary.textContent = "▲ 收起明细";
-          dailyDetailSummary.className = "daily-detail-summary";
           dailyDetailSummary.style.cursor = "pointer";
           dailyDetailList.classList.remove("hidden");
 
-          // 渲染列表
-          dailyDetailList.innerHTML = "";
-          for (var j = 0; j < daily.length; j++) {
-            var item = daily[j];
+          for (var i = 0; i < daily.length; i++) {
+            if (daily[i].amount === 0) continue;
             var itemDiv = document.createElement("div");
             itemDiv.className = "daily-item";
+            var dateParts = daily[i].date.split("-");
+            var displayDate = parseInt(dateParts[2], 10) + "日";
 
             var dateSpan = document.createElement("span");
             dateSpan.className = "daily-item-date";
-            dateSpan.textContent = monthStr + item.day + "日";
+            dateSpan.textContent = displayDate;
 
             var amountDiv = document.createElement("div");
-            amountDiv.className = "daily-item-amount";
-
             var amountSpan = document.createElement("span");
-            amountSpan.textContent = formatAmount(item.amount) + "元";
-
             var arrowSpan = document.createElement("span");
             arrowSpan.className = "daily-item-arrow";
+            arrowSpan.textContent = "❯";
 
-            if (item.amount > 0) {
-              itemDiv.classList.add("has-spending");
-              amountDiv.className = "daily-item-amount spending";
-              arrowSpan.textContent = "▸";
-              // 点击打开日明细浮层
-              (function (dateStr, dayNum) {
-                itemDiv.addEventListener("click", function () {
-                  openDayDetail(dateStr, monthStr + dayNum + "日");
-                });
-              })(item.date, item.day);
+            if (daily[i].amount > 0) {
+              amountDiv.className = "daily-item-amount";
+              amountSpan.textContent = formatAmount(daily[i].amount) + "元";
             } else {
               amountDiv.className = "daily-item-amount zero";
             }
@@ -1006,10 +1087,17 @@
             amountDiv.appendChild(arrowSpan);
             itemDiv.appendChild(dateSpan);
             itemDiv.appendChild(amountDiv);
+
+            // 点击打开日明细浮层
+            (function (dateStr, dispDate) {
+              itemDiv.addEventListener("click", function () {
+                openDayDetail(dateStr, dispDate);
+              });
+            })(daily[i].date, displayDate);
+
             dailyDetailList.appendChild(itemDiv);
           }
         } else {
-          // 折叠状态
           dailyDetailSummary.textContent = "▼ 查看每日明细（已消费 " + spendingDays + " 天）";
           dailyDetailSummary.className = "daily-detail-summary";
           dailyDetailSummary.style.cursor = "pointer";
@@ -1024,7 +1112,7 @@
         for (var i = 0; i < daily.length; i++) {
           if (daily[i].amount > 0) spendingDays++;
         }
-        if (spendingDays === 0) return; // 无记录时不响应点击
+        if (spendingDays === 0) return;
         dailyDetailExpanded = !dailyDetailExpanded;
         renderDailyDetail();
       }
@@ -1037,24 +1125,44 @@
 
       // ---------- 打开日明细浮层 ----------
       function openDayDetail(dateStr, displayDate) {
+        currentDayDetailDate = dateStr;
+        isAddingNewRecord = false;
+        renderDayDetailContent();
+        dayDetailOverlay.classList.remove("hidden");
+      }
+
+      // ---------- 渲染日明细浮层内容 ----------
+      function renderDayDetailContent() {
+        var dateStr = currentDayDetailDate;
+        if (!dateStr) return;
+
+        var dateParts = dateStr.split("-");
+        var displayDate = parseInt(dateParts[1], 10) + "月" + parseInt(dateParts[2], 10) + "日";
+        dayDetailTitle.textContent = displayDate + " 明细";
+
         var history = loadHistory();
         var records = [];
+        var recordIndices = []; // 记录在原 history 数组中的索引
         for (var i = 0; i < history.length; i++) {
           if (history[i].date === dateStr) {
             records.push(history[i]);
+            recordIndices.push(i);
           }
         }
 
-        dayDetailTitle.textContent = displayDate + " 明细";
         dayDetailListEl.innerHTML = "";
 
-        // 时间倒序
+        // 时间倒序（最新记录在上）
         var reversed = records.slice().reverse();
+        var reversedIndices = recordIndices.slice().reverse();
+
         for (var j = 0; j < reversed.length; j++) {
           var record = reversed[j];
+          var originalIndex = reversedIndices[j];
 
           var itemDiv = document.createElement("div");
           itemDiv.className = "day-record-item";
+          itemDiv.setAttribute("data-original-index", originalIndex);
 
           var leftDiv = document.createElement("div");
           leftDiv.className = "day-record-left";
@@ -1074,17 +1182,336 @@
           timeSpan.className = "day-record-time";
           timeSpan.textContent = record.time || "--:--";
 
+          // 操作按钮组
+          var actionsDiv = document.createElement("div");
+          actionsDiv.className = "day-record-actions";
+
+          var editBtn = document.createElement("button");
+          editBtn.className = "day-record-action-btn";
+          editBtn.textContent = "✏️";
+          editBtn.title = "编辑";
+          editBtn.addEventListener("click", function (idx, div) {
+            return function (e) { e.stopPropagation(); startEdit(idx, div); };
+          }(originalIndex, itemDiv));
+
+          var deleteBtn = document.createElement("button");
+          deleteBtn.className = "day-record-action-btn delete-btn";
+          deleteBtn.textContent = "🗑️";
+          deleteBtn.title = "删除";
+          deleteBtn.addEventListener("click", function (idx) {
+            return function (e) { e.stopPropagation(); deleteRecord(idx); };
+          }(originalIndex));
+
+          actionsDiv.appendChild(editBtn);
+          actionsDiv.appendChild(deleteBtn);
+
           itemDiv.appendChild(leftDiv);
+          itemDiv.appendChild(actionsDiv);
           itemDiv.appendChild(timeSpan);
           dayDetailListEl.appendChild(itemDiv);
         }
+      }
 
-        dayDetailOverlay.classList.remove("hidden");
+      // ---------- 刷新整个页面（数据变更后调用） ----------
+      function refreshAll() {
+        updateStatsCards();
+        updateChart();
+        renderDailyDetail();
+        renderDayDetailContent();
+
+        // 检查该日期是否还有记录，没有则自动关闭浮层
+        var history = loadHistory();
+        var hasRecords = false;
+        for (var i = 0; i < history.length; i++) {
+          if (history[i].date === currentDayDetailDate) {
+            hasRecords = true;
+            break;
+          }
+        }
+        if (!hasRecords) {
+          closeDayDetail();
+        }
+      }
+
+      // ---------- 删除一条记录 ----------
+      function deleteRecord(originalIndex) {
+        if (!confirm("确定删除这条记录吗？")) return;
+        var history = loadHistory();
+        if (originalIndex < 0 || originalIndex >= history.length) return;
+        history.splice(originalIndex, 1);
+        saveHistory(history);
+        refreshAll();
+      }
+
+      // ---------- 开始编辑一条记录 ----------
+      function startEdit(originalIndex, itemDiv) {
+        var history = loadHistory();
+        if (originalIndex < 0 || originalIndex >= history.length) return;
+        var record = history[originalIndex];
+
+        // 标记该 item 为编辑态
+        itemDiv.setAttribute("data-editing", "true");
+        itemDiv.setAttribute("data-editing-index", originalIndex);
+
+        itemDiv.innerHTML = "";
+
+        var editRow = document.createElement("div");
+        editRow.className = "day-record-edit-row";
+
+        // 日期（只读）
+        var dateLabel = document.createElement("span");
+        dateLabel.className = "day-record-edit-date-label";
+        dateLabel.textContent = record.date;
+
+        // 时间输入框
+        var timeInput = document.createElement("input");
+        timeInput.type = "time";
+        timeInput.className = "day-record-edit-input time-input";
+        // 格式化为 HH:MM 供 time input 使用
+        var timeVal = record.time || "";
+        // time input 需要 HH:MM 格式
+        if (timeVal && /^\d{2}:\d{2}(:\d{2})?$/.test(timeVal)) {
+          timeInput.value = timeVal.substring(0, 5);
+        } else {
+          timeInput.value = "";
+        }
+        timeInput.setAttribute("placeholder", "请选择时间");
+
+        // 金额输入框
+        var amountEditInput = document.createElement("input");
+        amountEditInput.type = "text";
+        amountEditInput.inputMode = "decimal";
+        amountEditInput.className = "day-record-edit-input";
+        amountEditInput.value = formatAmount(record.amount);
+        amountEditInput.addEventListener("input", function () {
+          var val = this.value.replace(/[^0-9.]/g, "");
+          var dotIdx = val.indexOf(".");
+          if (dotIdx !== -1) {
+            val = val.substring(0, dotIdx + 1) + val.substring(dotIdx + 1).replace(/\./g, "");
+            if (val.substring(dotIdx + 1).length > 2) {
+              val = val.substring(0, dotIdx + 3);
+            }
+          }
+          this.value = val;
+        });
+
+        // 备注输入框
+        var noteEditInput = document.createElement("input");
+        noteEditInput.type = "text";
+        noteEditInput.className = "day-record-edit-input note-input";
+        noteEditInput.value = record.note || "";
+        noteEditInput.placeholder = "备注";
+
+        // 保存按钮
+        var saveBtn = document.createElement("button");
+        saveBtn.className = "day-record-edit-save";
+        saveBtn.textContent = "✓";
+        saveBtn.title = "保存";
+        saveBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          saveEdit(originalIndex, timeInput.value.trim(), amountEditInput.value.trim(), noteEditInput.value.trim());
+        });
+
+        // 取消按钮
+        var cancelBtn = document.createElement("button");
+        cancelBtn.className = "day-record-edit-cancel";
+        cancelBtn.textContent = "✕";
+        cancelBtn.title = "取消";
+        cancelBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          renderDayDetailContent();
+        });
+
+        editRow.appendChild(dateLabel);
+        editRow.appendChild(timeInput);
+        editRow.appendChild(amountEditInput);
+        editRow.appendChild(noteEditInput);
+        editRow.appendChild(saveBtn);
+        editRow.appendChild(cancelBtn);
+
+        itemDiv.appendChild(editRow);
+
+        setTimeout(function () { amountEditInput.focus(); amountEditInput.select(); }, 50);
+
+        // Enter 保存
+        timeInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") { e.preventDefault(); saveEdit(originalIndex, timeInput.value.trim(), amountEditInput.value.trim(), noteEditInput.value.trim()); }
+        });
+        amountEditInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") { e.preventDefault(); saveEdit(originalIndex, timeInput.value.trim(), amountEditInput.value.trim(), noteEditInput.value.trim()); }
+        });
+        noteEditInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") { e.preventDefault(); saveEdit(originalIndex, timeInput.value.trim(), amountEditInput.value.trim(), noteEditInput.value.trim()); }
+        });
+      }
+
+      // ---------- 保存编辑 ----------
+      function saveEdit(originalIndex, newTimeStr, newAmountStr, newNoteStr) {
+        // 校验时间不能为空
+        if (newTimeStr === "") {
+          alert("请选择时间");
+          return;
+        }
+
+        var newAmount = parseFloat(newAmountStr);
+        if (isNaN(newAmount) || newAmount <= 0) return;
+
+        var history = loadHistory();
+        if (originalIndex < 0 || originalIndex >= history.length) return;
+
+        // 格式化时间为 HH:MM:SS
+        var formattedTime = newTimeStr.length === 5 ? newTimeStr + ":00" : newTimeStr;
+
+        history[originalIndex].amount = newAmount;
+        history[originalIndex].note = newNoteStr !== "" ? newNoteStr : "未备注";
+        history[originalIndex].time = formattedTime;
+
+        saveHistory(history);
+        refreshAll();
+      }
+
+      // ---------- 开始新增一条记录 ----------
+      function startAddRecord() {
+        if (isAddingNewRecord) return; // 防止重复点击
+
+        // 先取消所有现有编辑态
+        renderDayDetailContent();
+
+        isAddingNewRecord = true;
+
+        // 在列表末尾创建一条编辑态的空记录
+        var itemDiv = document.createElement("div");
+        itemDiv.className = "day-record-item";
+        itemDiv.setAttribute("data-editing", "true");
+        itemDiv.setAttribute("data-is-new", "true");
+
+        var editRow = document.createElement("div");
+        editRow.className = "day-record-edit-row";
+
+        // 日期（只读）
+        var dateLabel = document.createElement("span");
+        dateLabel.className = "day-record-edit-date-label";
+        dateLabel.textContent = currentDayDetailDate;
+
+        // 时间（默认当前时间）
+        var now = new Date();
+        var defaultTime = now.getHours().toString().padStart(2, "0") + ":" + now.getMinutes().toString().padStart(2, "0");
+
+        var timeInput = document.createElement("input");
+        timeInput.type = "time";
+        timeInput.className = "day-record-edit-input time-input";
+        timeInput.value = defaultTime;
+        timeInput.setAttribute("placeholder", "请选择时间");
+
+        // 金额输入框（空）
+        var amountEditInput = document.createElement("input");
+        amountEditInput.type = "text";
+        amountEditInput.inputMode = "decimal";
+        amountEditInput.className = "day-record-edit-input";
+        amountEditInput.placeholder = "金额";
+        amountEditInput.addEventListener("input", function () {
+          var val = this.value.replace(/[^0-9.]/g, "");
+          var dotIdx = val.indexOf(".");
+          if (dotIdx !== -1) {
+            val = val.substring(0, dotIdx + 1) + val.substring(dotIdx + 1).replace(/\./g, "");
+            if (val.substring(dotIdx + 1).length > 2) {
+              val = val.substring(0, dotIdx + 3);
+            }
+          }
+          this.value = val;
+        });
+
+        // 备注输入框（空）
+        var noteEditInput = document.createElement("input");
+        noteEditInput.type = "text";
+        noteEditInput.className = "day-record-edit-input note-input";
+        noteEditInput.placeholder = "备注";
+
+        // 保存按钮
+        var saveBtn = document.createElement("button");
+        saveBtn.className = "day-record-edit-save";
+        saveBtn.textContent = "✓";
+        saveBtn.title = "保存";
+        saveBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          saveNewRecord(timeInput.value.trim(), amountEditInput.value.trim(), noteEditInput.value.trim());
+        });
+
+        // 取消按钮
+        var cancelBtn = document.createElement("button");
+        cancelBtn.className = "day-record-edit-cancel";
+        cancelBtn.textContent = "✕";
+        cancelBtn.title = "取消";
+        cancelBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          // 取消新增：直接重新渲染，不留任何痕迹
+          isAddingNewRecord = false;
+          renderDayDetailContent();
+        });
+
+        editRow.appendChild(dateLabel);
+        editRow.appendChild(timeInput);
+        editRow.appendChild(amountEditInput);
+        editRow.appendChild(noteEditInput);
+        editRow.appendChild(saveBtn);
+        editRow.appendChild(cancelBtn);
+
+        itemDiv.appendChild(editRow);
+        dayDetailListEl.appendChild(itemDiv);
+
+        // 自动聚焦金额输入框
+        setTimeout(function () { amountEditInput.focus(); }, 50);
+
+        // Enter 保存
+        timeInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") { e.preventDefault(); saveNewRecord(timeInput.value.trim(), amountEditInput.value.trim(), noteEditInput.value.trim()); }
+        });
+        amountEditInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") { e.preventDefault(); saveNewRecord(timeInput.value.trim(), amountEditInput.value.trim(), noteEditInput.value.trim()); }
+        });
+        noteEditInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") { e.preventDefault(); saveNewRecord(timeInput.value.trim(), amountEditInput.value.trim(), noteEditInput.value.trim()); }
+        });
+
+        // 滚动到底部
+        dayDetailListEl.scrollTop = dayDetailListEl.scrollHeight;
+      }
+
+      // ---------- 保存新记录 ----------
+      function saveNewRecord(newTimeStr, newAmountStr, newNoteStr) {
+        // 校验时间不能为空
+        if (newTimeStr === "") {
+          alert("请选择时间");
+          return;
+        }
+
+        var newAmount = parseFloat(newAmountStr);
+        if (isNaN(newAmount) || newAmount <= 0) return;
+
+        var history = loadHistory();
+
+        // 格式化时间为 HH:MM:SS
+        var formattedTime = newTimeStr.length === 5 ? newTimeStr + ":00" : newTimeStr;
+
+        var newRecord = {
+          amount: newAmount,
+          note: newNoteStr !== "" ? newNoteStr : "未备注",
+          time: formattedTime,
+          date: currentDayDetailDate
+        };
+
+        history.push(newRecord);
+        saveHistory(history);
+
+        isAddingNewRecord = false;
+        refreshAll();
       }
 
       // ---------- 关闭日明细浮层 ----------
       function closeDayDetail() {
         dayDetailOverlay.classList.add("hidden");
+        currentDayDetailDate = null;
+        isAddingNewRecord = false;
       }
 
       // ---------- 月份面板：打开 ----------
@@ -1179,6 +1606,12 @@
         if (e.target === dayDetailOverlay) {
           closeDayDetail();
         }
+      });
+
+      // "+ 记一笔"按钮
+      dayDetailAddBtn.addEventListener("click", function () {
+        if (!currentDayDetailDate) return;
+        startAddRecord();
       });
 
       // ---------- 启动 ----------
