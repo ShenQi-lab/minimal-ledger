@@ -707,9 +707,32 @@
   <!-- Service Worker 注册 -->
   <script>
     if ("serviceWorker" in navigator) {
+      // 检测 SW 更新后自动刷新页面
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener("controllerchange", function () {
+        if (refreshing) return;
+        refreshing = true;
+        window.location.reload();
+      });
+
       window.addEventListener("load", function () {
         navigator.serviceWorker.register("./sw.js").then(function (registration) {
           console.log("[极简记账本] Service Worker 注册成功，scope:", registration.scope);
+          // 如果 SW 已更新但尚未激活，主动发送 skipWaiting 消息
+          if (registration.waiting) {
+            registration.waiting.postMessage({ type: "SKIP_WAITING" });
+          }
+          registration.addEventListener("updatefound", function () {
+            var newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener("statechange", function () {
+                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                  // 新 SW 已安装完毕，发送 skipWaiting 并等待 controllerchange 触发刷新
+                  newWorker.postMessage({ type: "SKIP_WAITING" });
+                }
+              });
+            }
+          });
         }).catch(function (err) {
           console.error("[极简记账本] Service Worker 注册失败:", err);
         });
