@@ -1,5 +1,5 @@
 /* ==========================================
-   极简记账本 V1.8.0 — Service Worker
+   极简记账本 V1.9.0 — Service Worker
    缓存优先 (Cache First) 策略
    自动更新：install 跳过等待 + activate 接管页面 +
    controllerchange 页面自动刷新
