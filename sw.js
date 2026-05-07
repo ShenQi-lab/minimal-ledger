@@ -14,7 +14,8 @@ var CORE_FILES = [
   "index.html",
   "stats.html",
   "manifest.json",
-  "icon.png"
+  "icon.png",
+  "update-v1.9.0"
 ];
 
 /* ---------- install：预缓存核心文件（带版本号查询参数），立即激活 ---------- */
