@@ -1,5 +1,5 @@
 /* ==========================================
-   极简记账本 V1.9.2 — Service Worker
+极简记账本 V1.9.3 — Service Worker
    HTML 文件：网络优先 (Network First) 策略
    其他静态资源：缓存优先 (Cache First) 策略
    自动更新：install 跳过等待 + activate 接管页面 +
@@ -16,7 +16,7 @@ var CORE_FILES = [
   "stats.html",
   "manifest.json",
   "icon.png",
-  "update-v1.9.2"
+  "update-v1.9.3"
 ];
 
 // HTML 文件名列表（用于判断网络优先策略）
@@ -97,14 +97,14 @@ self.addEventListener("install", function (event) {
       var htmlUrls = ["./", "index.html", "stats.html"];
       for (var i = 0; i < htmlUrls.length; i++) {
         htmlPromises.push(
-          cache.add(new Request(htmlUrls[i] + "?v=" + CACHE_VERSION, { cache: "reload" }))
+          cache.add(new Request(htmlUrls[i], { cache: "reload" }))
         );
       }
 
       // 其他文件用 cache.addAll() 正常预缓存
-      var otherUrls = ["manifest.json", "icon.png", "update-v1.9.2"];
+      var otherUrls = ["manifest.json", "icon.png"];
       var otherRequests = otherUrls.map(function (url) {
-        return new Request(url + "?v=" + CACHE_VERSION);
+        return new Request(url);
       });
 
       return Promise.all(htmlPromises).then(function () {
