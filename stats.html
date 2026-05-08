@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <title>极简记账本 - 统计 V1.9.3</title>
+  <title>极简记账本 - 统计 V1.9.4</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
   <link rel="icon" type="image/png" href="icon.png">
@@ -474,8 +474,8 @@
     .day-record-edit-input {
       border: 1.5px solid var(--input-border, #d5d5d5);
       border-radius: 5px;
-      padding: 3px 6px;
-      font-size: 0.82rem;
+      padding: 2px 6px;
+      font-size: 1rem;
       outline: none;
       width: 60px;
       text-align: center;
@@ -494,7 +494,8 @@
     }
 
     .day-record-edit-input.time-input {
-      width: 80px;
+      width: 90px;
+      min-width: 90px;
       text-align: center;
     }
 
@@ -1596,6 +1597,13 @@
         updateStatsCards();
         updateChart();
         renderDailyDetail();
+        // 兜底保险：确保 chartEmpty 和 dailyDetailSummary 严格互斥
+        var monthTotal = getMonthTotal(currentYear, currentMonth);
+        if (monthTotal > 0) {
+          chartEmpty.classList.add("hidden");
+        } else {
+          chartEmpty.classList.remove("hidden");
+        }
       }
 
       // ---------- 初始化：默认显示当前月 ----------
