@@ -1175,16 +1175,23 @@
         var recordIndices = []; // 记录在原 history 数组中的索引
         for (var i = 0; i < history.length; i++) {
           if (history[i].date === dateStr) {
-            records.push(history[i]);
-            recordIndices.push(i);
+            records.push({ record: history[i], index: i });
           }
         }
+
+        // 按时间正序排序
+        records.sort(function (a, b) {
+          return a.record.time.localeCompare(b.record.time);
+        });
+
+        var sortedRecords = records.map(function (v) { return v.record; });
+        var sortedIndices = records.map(function (v) { return v.index; });
 
         dayDetailListEl.innerHTML = "";
 
         // 时间倒序（最新记录在上）
-        var reversed = records.slice().reverse();
-        var reversedIndices = recordIndices.slice().reverse();
+        var reversed = sortedRecords.slice().reverse();
+        var reversedIndices = sortedIndices.slice().reverse();
 
         for (var j = 0; j < reversed.length; j++) {
           var record = reversed[j];
