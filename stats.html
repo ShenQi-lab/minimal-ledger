@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <title>极简记账本 - 统计 V1.9.8</title>
+  <title>统计 · 极简记账本 V1.10.0</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon.png">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     :root {
@@ -18,8 +19,10 @@
       --text-light: #666666;
       --accent: #FF8C42;
       --accent-hover: #e67830;
-      --radius: 12px;
+      --accent-active: #cc6a28;
       --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+      --radius: 12px;
+      --card-bg: #fafafa;
     }
 
     * {
@@ -37,8 +40,8 @@
       min-height: 100vh;
       padding-bottom: 64px;
       -webkit-tap-highlight-color: transparent;
-      -webkit-user-select: none;
       user-select: none;
+      -webkit-user-select: none;
     }
 
     .page {
@@ -53,128 +56,66 @@
     }
 
     /* ---------- 标题 ---------- */
-    .stats-title {
+    .title {
       font-size: 1.25rem;
       font-weight: 600;
       color: var(--text-light);
       letter-spacing: 0.05em;
-      text-align: center;
     }
 
-    /* ---------- 月份切换器 ---------- */
-    .month-switcher {
+    /* ---------- 月份导航 ---------- */
+    .month-nav {
       display: flex;
       align-items: center;
-      gap: 20px;
-      width: 100%;
-      justify-content: center;
+      gap: 14px;
     }
 
-    .month-arrow {
-      width: 36px;
-      height: 36px;
+    .month-nav-btn {
+      width: 30px;
+      height: 30px;
       border: none;
       border-radius: 50%;
-      background: #f0f0f0;
-      color: #555;
-      font-size: 1.1rem;
+      background: #e8e8e8;
+      color: #777;
+      font-size: 0.9rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.15s ease, transform 0.1s ease;
+      transition: background 0.15s ease;
       flex-shrink: 0;
       -webkit-tap-highlight-color: transparent;
     }
 
-    .month-arrow:hover {
-      background: #e0e0e0;
+    .month-nav-btn:hover {
+      background: #d0d0d0;
     }
 
-    .month-arrow:active {
-      transform: scale(0.9);
+    .month-nav-btn:active {
+      transform: scale(0.92);
     }
 
-    .month-arrow:disabled {
-      opacity: 0.3;
+    .month-nav-btn:disabled {
+      background: #f2f2f2;
+      color: #ccc;
       cursor: default;
       pointer-events: none;
     }
 
     .month-label {
-      font-size: 1.15rem;
+      font-size: 1rem;
       font-weight: 600;
       color: var(--text);
-      min-width: 100px;
+      min-width: 110px;
       text-align: center;
       cursor: pointer;
-    }
-
-    /* ---------- 月份面板 ---------- */
-    .month-panel-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.35);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      animation: fadeIn 0.18s ease;
-    }
-
-    .month-panel-overlay.hidden {
-      display: none;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    .month-panel-box {
-      background: #fff;
-      border-radius: var(--radius);
-      padding: 24px;
-      width: 300px;
-      max-width: 90vw;
-      max-height: 60vh;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-    }
-
-    .month-panel-title {
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 16px;
-      text-align: center;
-    }
-
-    .month-panel-list {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      max-height: 40vh;
-      overflow-y: auto;
-    }
-
-    .month-panel-item {
-      padding: 10px 14px;
+      padding: 4px 8px;
       border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.95rem;
-      color: var(--text);
-      transition: background 0.12s ease;
-      text-align: center;
+      transition: background 0.15s ease;
     }
 
-    .month-panel-item:hover {
-      background: #f5f5f5;
-    }
-
-    .month-panel-item.active {
-      background: #fff3eb;
-      color: var(--accent);
-      font-weight: 600;
+    .month-label:hover {
+      background: #f0f0f0;
     }
 
     /* ---------- 统计卡片 ---------- */
@@ -186,15 +127,15 @@
 
     .stat-card {
       flex: 1;
-      background: #fafafa;
+      background: var(--card-bg);
       border-radius: var(--radius);
-      padding: 18px 14px;
-      text-align: center;
       box-shadow: var(--shadow);
+      padding: 16px 12px;
+      text-align: center;
     }
 
     .stat-card-label {
-      font-size: 0.82rem;
+      font-size: 0.75rem;
       color: var(--text-light);
       margin-bottom: 6px;
     }
@@ -205,33 +146,27 @@
       color: var(--text);
     }
 
-    .stat-card-value.increase {
-      color: #e04848;
+    .stat-card-value.accent {
+      color: var(--accent);
     }
 
-    .stat-card-value.decrease {
-      color: #2eaa6e;
-    }
-
-    /* ---------- 折线图容器 ---------- */
-    .chart-wrapper {
+    /* ---------- 图表区 ---------- */
+    .chart-container {
       width: 100%;
-      background: #fafafa;
-      border-radius: var(--radius);
-      padding: 16px 12px;
-      box-shadow: var(--shadow);
-    }
-
-    .chart-wrapper canvas {
-      width: 100% !important;
-      height: 220px !important;
+      height: 220px;
+      position: relative;
     }
 
     .chart-empty {
-      text-align: center;
-      color: #b0b0b0;
-      font-size: 0.9rem;
-      padding: 60px 0;
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #c0c0c0;
+      font-size: 1rem;
+      pointer-events: none;
+      z-index: 1;
     }
 
     .chart-empty.hidden {
@@ -246,18 +181,21 @@
     .daily-detail-summary {
       font-size: 0.9rem;
       color: var(--text-light);
-      text-align: center;
-      padding: 8px 0;
-      -webkit-user-select: none;
-      user-select: none;
+      cursor: pointer;
+      padding: 6px 0;
+      transition: color 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .daily-detail-summary:hover {
+      color: var(--accent);
     }
 
     .daily-detail-list {
-      width: 100%;
+      margin-top: 6px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      margin-top: 8px;
+      gap: 6px;
     }
 
     .daily-detail-list.hidden {
@@ -269,11 +207,11 @@
       align-items: center;
       justify-content: space-between;
       padding: 10px 14px;
-      background: #fafafa;
-      border-radius: 8px;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
       cursor: pointer;
-      transition: background 0.12s ease;
-      font-size: 0.9rem;
+      transition: background 0.15s ease;
     }
 
     .daily-item:hover {
@@ -281,29 +219,32 @@
     }
 
     .daily-item:active {
+      transform: scale(0.98);
       background: #e8e8e8;
     }
 
     .daily-item-date {
-      font-weight: 500;
+      font-size: 0.9rem;
       color: var(--text);
+      font-weight: 500;
     }
 
     .daily-item-amount {
-      font-weight: 600;
-      color: var(--accent);
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: var(--accent);
+      font-weight: 600;
     }
 
     .daily-item-amount.zero {
-      color: #b0b0b0;
+      color: #c0c0c0;
     }
 
     .daily-item-arrow {
       font-size: 0.7rem;
-      color: #b0b0b0;
+      color: #c0c0c0;
     }
 
     /* ---------- 日明细浮层 ---------- */
@@ -322,25 +263,28 @@
       display: none;
     }
 
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
     .day-detail-box {
       background: #fff;
       border-radius: var(--radius);
       padding: 24px;
-      width: 380px;
+      width: 400px;
       max-width: 92vw;
       max-height: 70vh;
       display: flex;
       flex-direction: column;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-      user-select: auto;
-      -webkit-user-select: auto;
     }
 
     .day-detail-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       flex-shrink: 0;
     }
 
@@ -370,29 +314,61 @@
       background: #d5d5d5;
     }
 
+    .day-detail-add-btn {
+      width: 30px;
+      height: 30px;
+      border: none;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+      flex-shrink: 0;
+      margin-right: 8px;
+    }
+
+    .day-detail-add-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .day-detail-add-btn:active {
+      transform: scale(0.9);
+    }
+
+    .day-detail-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
     .day-detail-list {
       flex: 1;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin-bottom: 14px;
+      gap: 8px;
     }
 
     .day-record-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 12px;
+      padding: 8px 12px;
       background: #fafafa;
       border-radius: 8px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
+      min-height: 40px;
     }
 
     .day-record-left {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       flex: 1;
       min-width: 0;
     }
@@ -412,27 +388,26 @@
 
     .day-record-time {
       color: #b0b0b0;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       white-space: nowrap;
-      margin-left: 10px;
+      margin-left: 8px;
     }
 
-    /* ---------- 日明细浮层：操作按钮 ---------- */
     .day-record-actions {
       display: flex;
       align-items: center;
-      gap: 4px;
-      margin-left: 6px;
+      gap: 3px;
+      margin-left: 4px;
       flex-shrink: 0;
     }
 
     .day-record-action-btn {
-      width: 26px;
-      height: 26px;
+      width: 24px;
+      height: 24px;
       border: none;
       border-radius: 50%;
       background: transparent;
-      font-size: 0.8rem;
+      font-size: 0.7rem;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -458,32 +433,29 @@
       color: #d44;
     }
 
-    /* ---------- 日明细浮层：编辑态 ---------- */
+    /* ---------- 编辑态 ---------- */
     .day-record-edit-row {
       display: flex;
       align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
+      gap: 4px;
       flex: 1;
       min-width: 0;
     }
 
     .day-record-edit-date-label {
-      font-size: 0.82rem;
-      color: var(--text);
-      font-weight: 500;
+      font-size: 0.78rem;
+      color: var(--text-light);
       white-space: nowrap;
       flex-shrink: 0;
-      width: 36px;
     }
 
     .day-record-edit-input {
-      border: 1.5px solid var(--input-border, #d5d5d5);
+      border: 1.5px solid #d5d5d5;
       border-radius: 5px;
       padding: 2px 4px;
-      font-size: 1rem;
+      font-size: 0.78rem;
       outline: none;
-      width: 55px;
+      width: 52px;
       text-align: center;
       transition: border-color 0.15s ease;
       -webkit-appearance: none;
@@ -493,30 +465,24 @@
       border-color: var(--accent);
     }
 
+    .day-record-edit-input.time-input {
+      width: 58px;
+    }
+
     .day-record-edit-input.note-input {
       flex: 1;
-      min-width: 50px;
+      min-width: 40px;
       text-align: left;
     }
 
-    .day-record-edit-input.time-input {
-      width: 85px;
-      min-width: 85px;
-      text-align: center;
-    }
-
-    .day-record-edit-input:placeholder-shown {
-      color: #b0b0b0;
-    }
-
     .day-record-edit-save {
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border: none;
       border-radius: 50%;
       background: var(--accent);
       color: #fff;
-      font-size: 0.8rem;
+      font-size: 0.7rem;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -535,13 +501,13 @@
     }
 
     .day-record-edit-cancel {
-      width: 26px;
-      height: 26px;
+      width: 24px;
+      height: 24px;
       border: none;
       border-radius: 50%;
       background: #e8e8e8;
       color: #777;
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -552,32 +518,72 @@
     }
 
     .day-record-edit-cancel:hover {
-      background: hsl(0, 0%, 84%);
+      background: #d5d5d5;
     }
 
-    /* ---------- 日明细浮层："+ 记一笔"按钮 ---------- */
-    .day-detail-add-btn {
-      width: 100%;
-      height: 40px;
-      border: 1.5px dashed var(--accent);
-      border-radius: 8px;
-      background: #fff8f3;
-      color: var(--accent);
-      font-size: 0.95rem;
+    /* ---------- 月份面板 ---------- */
+    .month-panel-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      animation: fadeIn 0.18s ease;
+    }
+
+    .month-panel-overlay.hidden {
+      display: none;
+    }
+
+    .month-panel-box {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 20px;
+      width: 280px;
+      max-width: 90vw;
+      max-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .month-panel-title {
+      font-size: 1rem;
       font-weight: 600;
+      color: var(--text);
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .month-panel-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .month-panel-item {
+      padding: 10px 14px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: background 0.15s ease;
-      flex-shrink: 0;
+      font-size: 0.9rem;
+      text-align: center;
+      transition: background 0.12s ease;
+      color: var(--text);
       -webkit-tap-highlight-color: transparent;
     }
 
-    .day-detail-add-btn:hover {
-      background: #fff0e6;
+    .month-panel-item:hover {
+      background: #f0f0f0;
     }
 
-    .day-detail-add-btn:active {
-      transform: scale(0.97);
-      background: #ffe8d6;
+    .month-panel-item.active {
+      background: #fff3eb;
+      color: var(--accent);
+      font-weight: 600;
     }
 
     /* ---------- 底部导航栏 ---------- */
@@ -628,48 +634,55 @@
     @media (max-width: 480px) {
       .page {
         padding: 28px 18px 20px;
-        gap: 20px;
+        gap: 18px;
       }
-
       .stat-card-value {
-        font-size: 1.35rem;
+        font-size: 1.3rem;
       }
+    }
 
-      .chart-wrapper canvas {
-        height: 180px !important;
+    @media (max-width: 360px) {
+      .stat-card {
+        padding: 12px 8px;
+      }
+      .stat-card-value {
+        font-size: 1.1rem;
       }
     }
   </style>
 </head>
 <body>
 
-  <div class="page" id="statsPage">
-    <!-- 标题 -->
-    <h1 class="stats-title">月度统计</h1>
+  <div class="page">
+    <h1 class="title">统计分析</h1>
 
-    <!-- 月份切换 -->
-    <div class="month-switcher">
-      <button class="month-arrow" id="prevMonthBtn" title="上一个月">◀</button>
-      <span class="month-label" id="monthLabel">2026年5月</span>
-      <button class="month-arrow" id="nextMonthBtn" title="下一个月">▶</button>
+    <!-- 月份导航 -->
+    <div class="month-nav">
+      <button class="month-nav-btn" id="prevMonthBtn" disabled>◀</button>
+      <span class="month-label" id="monthLabel"></span>
+      <button class="month-nav-btn" id="nextMonthBtn" disabled>▶</button>
     </div>
 
     <!-- 统计卡片 -->
     <div class="stats-cards">
       <div class="stat-card">
-        <div class="stat-card-label">本月总支出</div>
-        <div class="stat-card-value" id="monthTotal">0元</div>
+        <div class="stat-card-label">当月支出</div>
+        <div class="stat-card-value accent" id="monthTotal">0</div>
       </div>
-      <div class="stat-card" id="compareCard">
-        <div class="stat-card-label">较上月</div>
-        <div class="stat-card-value" id="monthCompare">--</div>
+      <div class="stat-card">
+        <div class="stat-card-label">消费天数</div>
+        <div class="stat-card-value" id="spendingDays">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">日均</div>
+        <div class="stat-card-value" id="avgDaily">0</div>
       </div>
     </div>
 
-    <!-- 折线图 -->
-    <div class="chart-wrapper" id="chartWrapper">
-      <canvas id="dailyChart"></canvas>
-      <div class="chart-empty hidden" id="chartEmpty">本月暂无记录</div>
+    <!-- 趋势图 -->
+    <div class="chart-container" id="chartContainer">
+      <canvas id="trendChart"></canvas>
+      <div class="chart-empty" id="chartEmpty">暂无消费记录</div>
     </div>
 
     <!-- 每日明细 -->
@@ -677,233 +690,310 @@
       <div class="daily-detail-summary" id="dailyDetailSummary">▼ 查看每日明细</div>
       <div class="daily-detail-list hidden" id="dailyDetailList"></div>
     </div>
+  </div>
 
-    <!-- 日明细浮层 -->
-    <div class="day-detail-overlay hidden" id="dayDetailOverlay">
-      <div class="day-detail-box">
-        <div class="day-detail-header">
-          <span class="day-detail-title" id="dayDetailTitle">5月5日 明细</span>
+  <!-- 日明细浮层 -->
+  <div class="day-detail-overlay hidden" id="dayDetailOverlay">
+    <div class="day-detail-box">
+      <div class="day-detail-header">
+        <span class="day-detail-title" id="dayDetailTitle"></span>
+        <div class="day-detail-header-left">
+          <button class="day-detail-add-btn" id="dayDetailAddBtn" title="加一笔">+</button>
           <button class="day-detail-close" id="dayDetailCloseBtn">✕</button>
         </div>
-        <div class="day-detail-list" id="dayDetailList"></div>
-        <button class="day-detail-add-btn" id="dayDetailAddBtn">+ 记一笔</button>
       </div>
-    </div>
-
-    <!-- 月份面板 -->
-    <div class="month-panel-overlay hidden" id="monthPanelOverlay">
-      <div class="month-panel-box">
-        <div class="month-panel-title">选择月份</div>
-        <div class="month-panel-list" id="monthPanelList"></div>
-      </div>
+      <div class="day-detail-list" id="dayDetailListEl"></div>
     </div>
   </div>
 
-  <!-- 底部导航栏 -->
+  <!-- 月份面板 -->
+  <div class="month-panel-overlay hidden" id="monthPanelOverlay">
+    <div class="month-panel-box">
+      <div class="month-panel-title">选择月份</div>
+      <div class="month-panel-list" id="monthPanelList"></div>
+    </div>
+  </div>
+
+  <!-- 底部导航 -->
   <nav class="bottom-nav">
-    <a class="nav-item" href="index.html" id="navLedger">
+    <a class="nav-item" href="index.html">
       <span class="nav-icon">📝</span>
       <span>记账</span>
     </a>
-    <a class="nav-item active" href="stats.html" id="navStats">
+    <a class="nav-item active" href="stats.html">
       <span class="nav-icon">📊</span>
       <span>统计</span>
     </a>
   </nav>
 
-  <!-- Service Worker 注册 -->
   <script>
-    if ("serviceWorker" in navigator) {
-      // 检测 SW 更新后自动刷新页面
-      var refreshing = false;
-      navigator.serviceWorker.addEventListener("controllerchange", function () {
-        if (refreshing) return;
-        refreshing = true;
-        window.location.reload();
-      });
-
-      window.addEventListener("load", function () {
-        navigator.serviceWorker.register("./sw.js").then(function (registration) {
-          console.log("[极简记账本] Service Worker 注册成功，scope:", registration.scope);
-          // 如果 SW 已更新但尚未激活，主动发送 skipWaiting 消息
-          if (registration.waiting) {
-            registration.waiting.postMessage({ type: "SKIP_WAITING" });
-          }
-          registration.addEventListener("updatefound", function () {
-            var newWorker = registration.installing;
-            if (newWorker) {
-              newWorker.addEventListener("statechange", function () {
-                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-                  // 新 SW 已安装完毕，发送 skipWaiting 并等待 controllerchange 触发刷新
-                  newWorker.postMessage({ type: "SKIP_WAITING" });
-                }
-              });
-            }
-          });
-        }).catch(function (err) {
-          console.error("[极简记账本] Service Worker 注册失败:", err);
-        });
-      });
-    }
-  </script>
-
-  <script>
+    // ========== Supabase 初始化 ==========
     (function () {
-      // ---------- DOM 元素 ----------
-      const monthLabel = document.getElementById("monthLabel");
-      const prevMonthBtn = document.getElementById("prevMonthBtn");
-      const nextMonthBtn = document.getElementById("nextMonthBtn");
-      const monthTotalEl = document.getElementById("monthTotal");
-      const monthCompareEl = document.getElementById("monthCompare");
-      const chartWrapper = document.getElementById("chartWrapper");
-      const chartEmpty = document.getElementById("chartEmpty");
-      const canvas = document.getElementById("dailyChart");
-      const ctx = canvas.getContext("2d");
-      const dailyDetailSummary = document.getElementById("dailyDetailSummary");
-      const dailyDetailList = document.getElementById("dailyDetailList");
-      const dayDetailOverlay = document.getElementById("dayDetailOverlay");
-      const dayDetailTitle = document.getElementById("dayDetailTitle");
-      const dayDetailListEl = document.getElementById("dayDetailList");
-      const dayDetailCloseBtn = document.getElementById("dayDetailCloseBtn");
-      const dayDetailAddBtn = document.getElementById("dayDetailAddBtn");
-      const monthPanelOverlay = document.getElementById("monthPanelOverlay");
-      const monthPanelList = document.getElementById("monthPanelList");
+      var SUPABASE_URL = 'https://zmryiekgosgjipnsyayj.supabase.co';
+      var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptcnlpZWtnb3NnamlwbnN5YXlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMjcyNzQsImV4cCI6MjA5MzkwMzI3NH0.HAnHiz5x1EzwPpVyS8Df270UKvHjkW7LwG5UJiBOEHo';
+      var supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-      // ---------- localStorage key ----------
-      const HISTORY_KEY = "minimal_ledger_history";
+      // 尝试从 index.html 的全局变量获取用户状态（同一域下共享）
+      // 如果 index.html 未打开，则自行检查 session
+      var currentUser = (typeof window.__currentUser !== 'undefined' && window.__currentUser) || null;
+      var sharedSupabase = (typeof window.__supabase !== 'undefined') ? window.__supabase : supabase;
 
-      // ---------- 状态 ----------
-      let currentYear = new Date().getFullYear();
-      let currentMonth = new Date().getMonth() + 1; // 1-12
-      let dailyDetailExpanded = false;
-      let chart = null;
-      // 当前打开的日明细浮层对应的日期
-      let currentDayDetailDate = null;
-      // 浮层中正在添加新记录的状态标记
-      let isAddingNewRecord = false;
+      var HISTORY_KEY = "minimal_ledger_history";
 
-      // ---------- 格式化金额 ----------
-      function formatAmount(value) {
-        return parseFloat(value.toFixed(2));
+      // ---------- DOM ----------
+      var monthLabelEl = document.getElementById("monthLabel");
+      var prevMonthBtn = document.getElementById("prevMonthBtn");
+      var nextMonthBtn = document.getElementById("nextMonthBtn");
+      var monthTotalEl = document.getElementById("monthTotal");
+      var spendingDaysEl = document.getElementById("spendingDays");
+      var avgDailyEl = document.getElementById("avgDaily");
+      var chartContainer = document.getElementById("chartContainer");
+      var trendChartCanvas = document.getElementById("trendChart");
+      var chartEmpty = document.getElementById("chartEmpty");
+      var dailyDetailSummary = document.getElementById("dailyDetailSummary");
+      var dailyDetailList = document.getElementById("dailyDetailList");
+      var dayDetailOverlay = document.getElementById("dayDetailOverlay");
+      var dayDetailTitle = document.getElementById("dayDetailTitle");
+      var dayDetailListEl = document.getElementById("dayDetailListEl");
+      var dayDetailCloseBtn = document.getElementById("dayDetailCloseBtn");
+      var dayDetailAddBtn = document.getElementById("dayDetailAddBtn");
+      var monthPanelOverlay = document.getElementById("monthPanelOverlay");
+      var monthPanelList = document.getElementById("monthPanelList");
+
+      var currentYear = null;
+      var currentMonth = null;
+      var currentDayDetailDate = null;
+      var isAddingNewRecord = false;
+      var dailyDetailExpanded = false;
+      var trendChart = null;
+
+      // ========== 数据加载层 ==========
+
+      // ---------- loadHistory(): 统一入口，对上层透明 ----------
+      async function loadHistory() {
+        // 先尝试获取最新的用户状态
+        if (!currentUser && sharedSupabase) {
+          try {
+            var { data: sessionData } = await sharedSupabase.auth.getSession();
+            if (sessionData && sessionData.session && sessionData.session.user) {
+              currentUser = sessionData.session.user;
+              window.__currentUser = currentUser;
+            }
+          } catch (e) {
+            // 静默
+          }
+        }
+        // 已登录 → 从 Supabase 读取
+        if (currentUser && sharedSupabase) {
+          try {
+            var { data, error } = await sharedSupabase
+              .from('records')
+              .select('id, amount, note, date, time')
+              .eq('user_id', currentUser.id)
+              .order('created_at', { ascending: true });
+            if (error) throw error;
+            if (!data || data.length === 0) return [];
+            return data.map(function (r) {
+              return {
+                _dbId: r.id,
+                amount: parseFloat(r.amount),
+                note: r.note || '未备注',
+                date: r.date,
+                time: r.time || '--:--'
+              };
+            });
+          } catch (err) {
+            console.error("[统计] Supabase 读取失败，回退 localStorage:", err.message);
+            // 读取失败，回退到 localStorage
+          }
+        }
+        // 未登录或 Supabase 不可用 → 从 localStorage 读取
+        return loadFromLocalStorage();
       }
 
-      // ---------- 读取所有历史记录 ----------
-      function loadHistory() {
+      function loadFromLocalStorage() {
         var stored = localStorage.getItem(HISTORY_KEY);
-        if (stored === null) return [];
+        if (!stored) return [];
         try {
           var parsed = JSON.parse(stored);
           if (!Array.isArray(parsed)) return [];
-          return parsed.filter(function (v) {
-            return v && typeof v.amount === "number" && typeof v.date === "string";
-          });
+          var lastDate = localStorage.getItem("minimal_ledger_last_date") || getDateString();
+          return parsed.map(function (v) {
+            if (typeof v === "number") {
+              return { amount: v, note: "未备注", time: "--:--", date: lastDate };
+            }
+            if (v && typeof v.amount === "number") {
+              if (!v.date) { v.date = lastDate; }
+              if (!v.note) { v.note = "未备注"; }
+              if (!v.time) { v.time = "--:--"; }
+              return v;
+            }
+            return null;
+          }).filter(function (v) { return v !== null; });
         } catch (e) {
           return [];
         }
       }
 
-      // ---------- 保存历史记录到 localStorage ----------
-      function saveHistory(historyArray) {
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(historyArray));
+      // ---------- saveHistory(): 保存到 localStorage ----------
+      function saveHistory(history) {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
       }
 
-      // ---------- 获取某年某月的日期范围 ----------
-      function getMonthDates(year, month) {
-        var daysInMonth = new Date(year, month, 0).getDate(); // month is 1-indexed, this trick works
-        var dates = [];
-        for (var d = 1; d <= daysInMonth; d++) {
-          var m = month.toString().padStart(2, "0");
-          var day = d.toString().padStart(2, "0");
-          dates.push(year + "-" + m + "-" + day);
+      // ========== 同步到 Supabase（编辑/删除/新增时调用）==========
+
+      async function saveToSupabase(record) {
+        if (!currentUser || !sharedSupabase) return null;
+        try {
+          var { data, error } = await sharedSupabase
+            .from('records')
+            .insert([{
+              user_id: currentUser.id,
+              amount: record.amount,
+              note: record.note,
+              date: record.date,
+              time: record.time
+            }])
+            .select('id')
+            .single();
+          if (error) throw error;
+          return data ? data.id : null;
+        } catch (err) {
+          console.error("[统计] Supabase 保存失败:", err.message);
+          return null;
         }
-        return dates;
       }
 
-      // ---------- 汇总某月每日支出 ----------
-      function aggregateByDay(year, month) {
-        var dates = getMonthDates(year, month);
-        var dailyMap = {};
-        for (var i = 0; i < dates.length; i++) {
-          dailyMap[dates[i]] = 0;
+      async function updateRecordInSupabase(dbId, updatedData) {
+        if (!currentUser || !sharedSupabase || !dbId) return;
+        try {
+          await sharedSupabase
+            .from('records')
+            .update({
+              amount: updatedData.amount,
+              note: updatedData.note,
+              date: updatedData.date,
+              time: updatedData.time
+            })
+            .eq('id', dbId);
+        } catch (err) {
+          console.error("[统计] Supabase 更新失败:", err.message);
         }
-        var history = loadHistory();
-        var monthPrefix = year + "-" + month.toString().padStart(2, "0") + "-";
-        for (var j = 0; j < history.length; j++) {
-          var record = history[j];
-          if (record.date.indexOf(monthPrefix) === 0 && dailyMap.hasOwnProperty(record.date)) {
-            dailyMap[record.date] += record.amount;
+      }
+
+      async function deleteRecordFromSupabase(dbId) {
+        if (!currentUser || !sharedSupabase || !dbId) return;
+        try {
+          await sharedSupabase
+            .from('records')
+            .delete()
+            .eq('id', dbId);
+        } catch (err) {
+          console.error("[统计] Supabase 删除失败:", err.message);
+        }
+      }
+
+      // ========== 工具函数 ==========
+
+      function getDateString() {
+        var now = new Date();
+        var y = now.getFullYear();
+        var m = (now.getMonth() + 1).toString().padStart(2, "0");
+        var d = now.getDate().toString().padStart(2, "0");
+        return y + "-" + m + "-" + d;
+      }
+
+      function formatAmount(value) {
+        return parseFloat(value.toFixed(2));
+      }
+
+      // ========== 数据聚合 ==========
+
+      // 当月总支出
+      function getMonthTotal(year, month) {
+        var history = loadHistorySync();
+        var total = 0;
+        for (var i = 0; i < history.length; i++) {
+          var parts = history[i].date.split("-");
+          if (parseInt(parts[0], 10) === year && parseInt(parts[1], 10) === month) {
+            total += history[i].amount;
           }
         }
-        // 转为数组，按日期排序
+        return parseFloat(total.toFixed(2));
+      }
+
+      // 按天聚合当月消费
+      function aggregateByDay(year, month) {
+        var history = loadHistorySync();
+        var daysInMonth = new Date(year, month, 0).getDate();
+        var dailyMap = {};
+        for (var d = 1; d <= daysInMonth; d++) {
+          var dStr = year + "-" + month.toString().padStart(2, "0") + "-" + d.toString().padStart(2, "0");
+          dailyMap[dStr] = 0;
+        }
+        for (var i = 0; i < history.length; i++) {
+          var date = history[i].date;
+          if (dailyMap.hasOwnProperty(date)) {
+            dailyMap[date] += history[i].amount;
+          }
+        }
         var result = [];
-        for (var k = 0; k < dates.length; k++) {
-          result.push({
-            date: dates[k],
-            day: parseInt(dates[k].split("-")[2], 10),
-            amount: formatAmount(dailyMap[dates[k]])
-          });
+        var keys = Object.keys(dailyMap).sort();
+        for (var j = 0; j < keys.length; j++) {
+          result.push({ date: keys[j], amount: parseFloat(dailyMap[keys[j]].toFixed(2)) });
         }
         return result;
       }
 
-      // ---------- 计算某月总支出 ----------
-      function getMonthTotal(year, month) {
-        var daily = aggregateByDay(year, month);
-        var total = 0;
-        for (var i = 0; i < daily.length; i++) {
-          total += daily[i].amount;
-        }
-        return formatAmount(total);
-      }
-
-      // ---------- 获取所有有记录的月份 ----------
+      // 获取存在的月份
       function getAvailableMonths() {
-        var history = loadHistory();
+        var history = loadHistorySync();
         var monthSet = {};
         for (var i = 0; i < history.length; i++) {
-          var d = history[i].date;
-          if (typeof d === "string" && d.length >= 7) {
-            var ym = d.substring(0, 7); // "YYYY-MM"
-            monthSet[ym] = true;
+          var parts = history[i].date.split("-");
+          if (parts.length >= 2) {
+            monthSet[parts[0] + "-" + parts[1]] = true;
           }
         }
-        var months = Object.keys(monthSet).sort(); // 正序排列
+        var months = Object.keys(monthSet).sort();
         return months;
       }
 
-      // ---------- 判断是否可以切换到某个月 ----------
+      // 同步读取缓存（用于聚合时避免多次异步调用）
+      var _cachedHistory = null;
+      function loadHistorySync() {
+        return _cachedHistory || [];
+      }
+
+      async function refreshHistoryCache() {
+        _cachedHistory = await loadHistory();
+      }
+
+      // ========== 月份导航 ==========
+
       function canGoToPrev() {
         var available = getAvailableMonths();
         if (available.length === 0) return false;
         var currentYM = currentYear + "-" + currentMonth.toString().padStart(2, "0");
-        for (var i = available.length - 1; i >= 0; i--) {
-          if (available[i] < currentYM) return true;
-        }
-        return false;
+        var idx = available.indexOf(currentYM);
+        return idx > 0;
       }
 
       function canGoToNext() {
         var available = getAvailableMonths();
         if (available.length === 0) return false;
-        var today = new Date();
-        var nowYM = today.getFullYear() + "-" + (today.getMonth() + 1).toString().padStart(2, "0");
         var currentYM = currentYear + "-" + currentMonth.toString().padStart(2, "0");
-        return currentYM < nowYM;
+        var idx = available.indexOf(currentYM);
+        return idx >= 0 && idx < available.length - 1;
       }
 
-      // ---------- 切换到上一个月 ----------
       function goToPrevMonth() {
         var available = getAvailableMonths();
         if (available.length === 0) return;
         var currentYM = currentYear + "-" + currentMonth.toString().padStart(2, "0");
-        var best = null;
-        for (var i = 0; i < available.length; i++) {
-          if (available[i] < currentYM) {
-            best = available[i];
-          }
-        }
-        if (best !== null) {
-          var parts = best.split("-");
+        var idx = available.indexOf(currentYM);
+        if (idx > 0) {
+          var parts = available[idx - 1].split("-");
           currentYear = parseInt(parts[0], 10);
           currentMonth = parseInt(parts[1], 10);
           collapseDailyDetail();
@@ -911,93 +1001,70 @@
         }
       }
 
-      // ---------- 切换到下一个月 ----------
       function goToNextMonth() {
-        var today = new Date();
-        var nowYM = today.getFullYear() + "-" + (today.getMonth() + 1).toString().padStart(2, "0");
+        var available = getAvailableMonths();
+        if (available.length === 0) return;
         var currentYM = currentYear + "-" + currentMonth.toString().padStart(2, "0");
-        if (currentYM >= nowYM) return;
-        if (currentMonth === 12) {
-          currentYear++;
-          currentMonth = 1;
-        } else {
-          currentMonth++;
+        var idx = available.indexOf(currentYM);
+        if (idx >= 0 && idx < available.length - 1) {
+          var parts = available[idx + 1].split("-");
+          currentYear = parseInt(parts[0], 10);
+          currentMonth = parseInt(parts[1], 10);
+          collapseDailyDetail();
+          renderAll();
         }
-        collapseDailyDetail();
-        renderAll();
       }
 
-      // ---------- 更新统计卡片 ----------
+      // ========== 界面渲染 ==========
+
       function updateStatsCards() {
-        var monthTotal = getMonthTotal(currentYear, currentMonth);
-        monthTotalEl.textContent = monthTotal + "元";
+        var monthTotalVal = getMonthTotal(currentYear, currentMonth);
+        monthTotalEl.textContent = monthTotalVal + "元";
 
-        var prevYear = currentYear;
-        var prevMonth = currentMonth - 1;
-        if (prevMonth === 0) {
-          prevYear = currentYear - 1;
-          prevMonth = 12;
+        var daily = aggregateByDay(currentYear, currentMonth);
+        var days = 0;
+        for (var i = 0; i < daily.length; i++) {
+          if (daily[i].amount > 0) days++;
         }
-        var prevTotal = getMonthTotal(prevYear, prevMonth);
-
-        if (prevTotal === 0 && monthTotal === 0) {
-          monthCompareEl.textContent = "--";
-          monthCompareEl.className = "stat-card-value";
-        } else if (prevTotal === 0) {
-          monthCompareEl.textContent = "上月无记录";
-          monthCompareEl.className = "stat-card-value increase";
-        } else {
-          var diff = formatAmount(monthTotal - prevTotal);
-          var pct = formatAmount(Math.abs((monthTotal - prevTotal) / prevTotal) * 100);
-          var sign = diff >= 0 ? "+" : "";
-          var arrow = diff >= 0 ? "↑" : "↓";
-          monthCompareEl.textContent = sign + diff + "元 " + arrow + pct + "%";
-          monthCompareEl.className = "stat-card-value " + (diff >= 0 ? "increase" : "decrease");
-        }
+        spendingDaysEl.textContent = days + "天";
+        avgDailyEl.textContent = days > 0 ? parseFloat((monthTotalVal / days).toFixed(2)) + "元" : "0元";
       }
 
-      // ---------- 更新折线图 ----------
       function updateChart() {
         var daily = aggregateByDay(currentYear, currentMonth);
-        var labels = [];
-        var data = [];
-        for (var i = 0; i < daily.length; i++) {
-          labels.push(daily[i].day + "日");
-          data.push(daily[i].amount);
-        }
-
         var hasData = false;
-        for (var j = 0; j < data.length; j++) {
-          if (data[j] > 0) { hasData = true; break; }
+        for (var i = 0; i < daily.length; i++) {
+          if (daily[i].amount > 0) { hasData = true; break; }
         }
 
         if (!hasData) {
-          canvas.style.display = "none";
+          if (trendChart) { trendChart.destroy(); trendChart = null; }
           chartEmpty.classList.remove("hidden");
-          if (chart) { chart.destroy(); chart = null; }
           return;
         }
-
-        canvas.style.display = "block";
         chartEmpty.classList.add("hidden");
 
-        if (chart) { chart.destroy(); chart = null; }
+        var labels = [];
+        var dataPoints = [];
+        for (var i = 0; i < daily.length; i++) {
+          var dParts = daily[i].date.split("-");
+          labels.push(parseInt(dParts[2], 10) + "日");
+          dataPoints.push(daily[i].amount);
+        }
 
-        chart = new Chart(ctx, {
-          type: "line",
+        if (trendChart) { trendChart.destroy(); }
+        var ctx = trendChartCanvas.getContext("2d");
+        trendChart = new Chart(ctx, {
+          type: "bar",
           data: {
             labels: labels,
             datasets: [{
-              label: "日支出 (元)",
-              data: data,
+              data: dataPoints,
+              backgroundColor: "rgba(255, 140, 66, 0.4)",
               borderColor: "#FF8C42",
-              backgroundColor: "rgba(255, 140, 66, 0.08)",
-              borderWidth: 2,
-              fill: true,
-              tension: 0.3,
-              pointRadius: function (ctx) {
-                return ctx.raw > 0 ? 3 : 0;
-              },
+              borderWidth: 1.2,
+              borderRadius: 4,
+              hoverBackgroundColor: "rgba(255, 140, 66, 0.6)",
               pointBackgroundColor: "#FF8C42",
               pointBorderColor: "#fff",
               pointBorderWidth: 1.5,
@@ -1008,9 +1075,7 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: {
-                display: false
-              },
+              legend: { display: false },
               tooltip: {
                 backgroundColor: "#2c2c2c",
                 titleColor: "#fff",
@@ -1018,64 +1083,44 @@
                 cornerRadius: 6,
                 padding: 10,
                 callbacks: {
-                  label: function (ctx) {
-                    return ctx.parsed.y + " 元";
-                  }
+                  label: function (ctx) { return ctx.parsed.y + " 元"; }
                 }
               }
             },
             scales: {
               x: {
-                grid: {
-                  display: false
-                },
-                ticks: {
-                  font: { size: 11 },
-                  color: "#999",
-                  maxTicksLimit: 15
-                }
+                grid: { display: false },
+                ticks: { font: { size: 11 }, color: "#999", maxTicksLimit: 15 }
               },
               y: {
                 beginAtZero: true,
-                grid: {
-                  color: "#f0f0f0"
-                },
+                grid: { color: "#f0f0f0" },
                 ticks: {
                   font: { size: 11 },
                   color: "#999",
-                  callback: function (value) {
-                    return value + "元";
-                  }
+                  callback: function (value) { return value + "元"; }
                 }
               }
             },
-            interaction: {
-              intersect: false,
-              mode: "index"
-            }
+            interaction: { intersect: false, mode: "index" }
           }
         });
-
-        canvas.parentElement.style.height = "220px";
+        chartContainer.style.height = "220px";
       }
 
-      // ---------- 更新月份标签 ----------
       function updateMonthLabel() {
-        monthLabel.textContent = currentYear + "年" + currentMonth + "月";
+        monthLabelEl.textContent = currentYear + "年" + currentMonth + "月";
         prevMonthBtn.disabled = !canGoToPrev();
         nextMonthBtn.disabled = !canGoToNext();
       }
 
-      // ---------- 渲染每日明细列表 ----------
       function renderDailyDetail() {
         var daily = aggregateByDay(currentYear, currentMonth);
         var spendingDays = 0;
         for (var i = 0; i < daily.length; i++) {
           if (daily[i].amount > 0) spendingDays++;
         }
-
         dailyDetailList.innerHTML = "";
-
         if (spendingDays === 0) {
           dailyDetailSummary.textContent = "▼ 每日明细（暂无消费记录）";
           dailyDetailSummary.style.cursor = "default";
@@ -1083,48 +1128,39 @@
           dailyDetailExpanded = false;
           return;
         }
-
         if (dailyDetailExpanded) {
           dailyDetailSummary.textContent = "▲ 收起明细";
           dailyDetailSummary.style.cursor = "pointer";
           dailyDetailList.classList.remove("hidden");
-
           for (var i = 0; i < daily.length; i++) {
             if (daily[i].amount === 0) continue;
             var itemDiv = document.createElement("div");
             itemDiv.className = "daily-item";
             var dateParts = daily[i].date.split("-");
             var displayDate = parseInt(dateParts[2], 10) + "日";
-
             var dateSpan = document.createElement("span");
             dateSpan.className = "daily-item-date";
             dateSpan.textContent = displayDate;
-
             var amountDiv = document.createElement("div");
             var amountSpan = document.createElement("span");
             var arrowSpan = document.createElement("span");
             arrowSpan.className = "daily-item-arrow";
             arrowSpan.textContent = "❯";
-
             if (daily[i].amount > 0) {
               amountDiv.className = "daily-item-amount";
               amountSpan.textContent = formatAmount(daily[i].amount) + "元";
             } else {
               amountDiv.className = "daily-item-amount zero";
             }
-
             amountDiv.appendChild(amountSpan);
             amountDiv.appendChild(arrowSpan);
             itemDiv.appendChild(dateSpan);
             itemDiv.appendChild(amountDiv);
-
-            // 点击打开日明细浮层
             (function (dateStr, dispDate) {
               itemDiv.addEventListener("click", function () {
                 openDayDetail(dateStr, dispDate);
               });
             })(daily[i].date, displayDate);
-
             dailyDetailList.appendChild(itemDiv);
           }
         } else {
@@ -1135,7 +1171,6 @@
         }
       }
 
-      // ---------- 展开/折叠每日明细切换 ----------
       function toggleDailyDetail() {
         var daily = aggregateByDay(currentYear, currentMonth);
         var spendingDays = 0;
@@ -1147,82 +1182,65 @@
         renderDailyDetail();
       }
 
-      // ---------- 折叠每日明细 ----------
       function collapseDailyDetail() {
         dailyDetailExpanded = false;
         renderDailyDetail();
       }
 
-      // ---------- 打开日明细浮层 ----------
-      function openDayDetail(dateStr, displayDate) {
+      // ========== 日明细浮层 ==========
+
+      async function openDayDetail(dateStr, displayDate) {
         currentDayDetailDate = dateStr;
         isAddingNewRecord = false;
-        renderDayDetailContent();
+        await refreshHistoryCache();  // ← 先刷新缓存，确保数据最新
+        await renderDayDetailContent();
         dayDetailOverlay.classList.remove("hidden");
       }
 
-      // ---------- 渲染日明细浮层内容 ----------
-      function renderDayDetailContent() {
+      async function renderDayDetailContent() {
         var dateStr = currentDayDetailDate;
         if (!dateStr) return;
-
         var dateParts = dateStr.split("-");
         var displayDate = parseInt(dateParts[1], 10) + "月" + parseInt(dateParts[2], 10) + "日";
         dayDetailTitle.textContent = displayDate + " 明细";
-
-        var history = loadHistory();
+        var history = loadHistorySync();  // ← 使用缓存，避免重复加载
         var records = [];
-        var recordIndices = []; // 记录在原 history 数组中的索引
+        var recordIndices = [];
         for (var i = 0; i < history.length; i++) {
           if (history[i].date === dateStr) {
             records.push({ record: history[i], index: i });
           }
         }
-
-        // 按时间正序排序
         records.sort(function (a, b) {
           return a.record.time.localeCompare(b.record.time);
         });
-
         var sortedRecords = records.map(function (v) { return v.record; });
         var sortedIndices = records.map(function (v) { return v.index; });
-
         dayDetailListEl.innerHTML = "";
-
-        // 时间倒序（最新记录在上）
         var reversed = sortedRecords.slice().reverse();
         var reversedIndices = sortedIndices.slice().reverse();
 
         for (var j = 0; j < reversed.length; j++) {
           var record = reversed[j];
           var originalIndex = reversedIndices[j];
-
           var itemDiv = document.createElement("div");
           itemDiv.className = "day-record-item";
           itemDiv.setAttribute("data-original-index", originalIndex);
-
           var leftDiv = document.createElement("div");
           leftDiv.className = "day-record-left";
-
           var amountSpan = document.createElement("span");
           amountSpan.className = "day-record-amount";
           amountSpan.textContent = "+" + formatAmount(record.amount) + "元";
-
           var noteSpan = document.createElement("span");
           noteSpan.className = "day-record-note";
           noteSpan.textContent = record.note || "未备注";
-
           leftDiv.appendChild(amountSpan);
           leftDiv.appendChild(noteSpan);
-
           var timeSpan = document.createElement("span");
           timeSpan.className = "day-record-time";
           timeSpan.textContent = record.time || "--:--";
-
-          // 操作按钮组
           var actionsDiv = document.createElement("div");
           actionsDiv.className = "day-record-actions";
-
           var editBtn = document.createElement("button");
           editBtn.className = "day-record-action-btn";
           editBtn.textContent = "✏️";
@@ -1230,7 +1248,6 @@
           editBtn.addEventListener("click", function (idx, div) {
             return function (e) { e.stopPropagation(); startEdit(idx, div); };
           }(originalIndex, itemDiv));
-
           var deleteBtn = document.createElement("button");
           deleteBtn.className = "day-record-action-btn delete-btn";
           deleteBtn.textContent = "🗑️";
@@ -1238,10 +1255,8 @@
           deleteBtn.addEventListener("click", function (idx) {
             return function (e) { e.stopPropagation(); deleteRecord(idx); };
           }(originalIndex));
-
           actionsDiv.appendChild(editBtn);
           actionsDiv.appendChild(deleteBtn);
-
           itemDiv.appendChild(leftDiv);
           itemDiv.appendChild(actionsDiv);
           itemDiv.appendChild(timeSpan);
@@ -1249,73 +1264,60 @@
         }
       }
 
-      // ---------- 刷新整个页面（数据变更后调用） ----------
-      function refreshAll() {
+      async function refreshAll() {
+        await refreshHistoryCache();
         updateStatsCards();
         updateChart();
         renderDailyDetail();
-        renderDayDetailContent();
-
-        // 检查该日期是否还有记录，没有则自动关闭浮层
-        var history = loadHistory();
+        await renderDayDetailContent();
+        var history = loadHistorySync();
         var hasRecords = false;
         for (var i = 0; i < history.length; i++) {
-          if (history[i].date === currentDayDetailDate) {
-            hasRecords = true;
-            break;
-          }
+          if (history[i].date === currentDayDetailDate) { hasRecords = true; break; }
         }
-        if (!hasRecords) {
-          closeDayDetail();
-        }
+        if (!hasRecords) { closeDayDetail(); }
       }
 
-      // ---------- 删除一条记录 ----------
-      function deleteRecord(originalIndex) {
+      // ========== 删除记录 ==========
+
+      async function deleteRecord(originalIndex) {
         if (!confirm("确定删除这条记录吗？")) return;
-        var history = loadHistory();
+        var history = await loadHistory();
         if (originalIndex < 0 || originalIndex >= history.length) return;
-        history.splice(originalIndex, 1);
+        var removed = history.splice(originalIndex, 1)[0];
         saveHistory(history);
-        refreshAll();
+        // 同步删除 Supabase
+        if (currentUser && removed._dbId) {
+          deleteRecordFromSupabase(removed._dbId);
+        }
+        await refreshAll();
       }
 
-      // ---------- 开始编辑一条记录 ----------
+      // ========== 编辑记录 ==========
+
       function startEdit(originalIndex, itemDiv) {
-        var history = loadHistory();
+        var history = loadHistorySync();
         if (originalIndex < 0 || originalIndex >= history.length) return;
         var record = history[originalIndex];
-
-        // 标记该 item 为编辑态
         itemDiv.setAttribute("data-editing", "true");
         itemDiv.setAttribute("data-editing-index", originalIndex);
-
         itemDiv.innerHTML = "";
-
         var editRow = document.createElement("div");
         editRow.className = "day-record-edit-row";
-
-        // 日期（只读）
         var dateLabel = document.createElement("span");
         dateLabel.className = "day-record-edit-date-label";
         var dateParts = record.date.split("-");
         dateLabel.textContent = parseInt(dateParts[1], 10) + "/" + parseInt(dateParts[2], 10);
-
-        // 时间输入框
         var timeInput = document.createElement("input");
         timeInput.type = "time";
         timeInput.className = "day-record-edit-input time-input";
-        // 格式化为 HH:MM 供 time input 使用
         var timeVal = record.time || "";
-        // time input 需要 HH:MM 格式
         if (timeVal && /^\d{2}:\d{2}(:\d{2})?$/.test(timeVal)) {
           timeInput.value = timeVal.substring(0, 5);
         } else {
           timeInput.value = "";
         }
         timeInput.setAttribute("placeholder", "请选择时间");
-
-        // 金额输入框
         var amountEditInput = document.createElement("input");
         amountEditInput.type = "text";
         amountEditInput.inputMode = "decimal";
@@ -1326,21 +1328,15 @@
           var dotIdx = val.indexOf(".");
           if (dotIdx !== -1) {
             val = val.substring(0, dotIdx + 1) + val.substring(dotIdx + 1).replace(/\./g, "");
-            if (val.substring(dotIdx + 1).length > 2) {
-              val = val.substring(0, dotIdx + 3);
-            }
+            if (val.substring(dotIdx + 1).length > 2) { val = val.substring(0, dotIdx + 3); }
           }
           this.value = val;
         });
-
-        // 备注输入框
         var noteEditInput = document.createElement("input");
         noteEditInput.type = "text";
         noteEditInput.className = "day-record-edit-input note-input";
         noteEditInput.value = record.note || "";
         noteEditInput.placeholder = "备注";
-
-        // 保存按钮
         var saveBtn = document.createElement("button");
         saveBtn.className = "day-record-edit-save";
         saveBtn.textContent = "✓";
@@ -1349,8 +1345,6 @@
           e.stopPropagation();
           saveEdit(originalIndex, timeInput.value.trim(), amountEditInput.value.trim(), noteEditInput.value.trim());
         });
-
-        // 取消按钮
         var cancelBtn = document.createElement("button");
         cancelBtn.className = "day-record-edit-cancel";
         cancelBtn.textContent = "✕";
@@ -1359,19 +1353,14 @@
           e.stopPropagation();
           renderDayDetailContent();
         });
-
         editRow.appendChild(dateLabel);
         editRow.appendChild(timeInput);
         editRow.appendChild(amountEditInput);
         editRow.appendChild(noteEditInput);
         editRow.appendChild(saveBtn);
         editRow.appendChild(cancelBtn);
-
         itemDiv.appendChild(editRow);
-
         setTimeout(function () { amountEditInput.focus(); amountEditInput.select(); }, 50);
-
-        // Enter 保存
         timeInput.addEventListener("keydown", function (e) {
           if (e.key === "Enter") { e.preventDefault(); saveEdit(originalIndex, timeInput.value.trim(), amountEditInput.value.trim(), noteEditInput.value.trim()); }
         });
@@ -1383,66 +1372,56 @@
         });
       }
 
-      // ---------- 保存编辑 ----------
-      function saveEdit(originalIndex, newTimeStr, newAmountStr, newNoteStr) {
-        // 校验时间不能为空
+      async function saveEdit(originalIndex, newTimeStr, newAmountStr, newNoteStr) {
         if (newTimeStr === "") {
           alert("请选择时间");
           return;
         }
-
         var newAmount = parseFloat(newAmountStr);
         if (isNaN(newAmount) || newAmount <= 0) return;
-
-        var history = loadHistory();
+        var history = await loadHistory();
         if (originalIndex < 0 || originalIndex >= history.length) return;
-
-        // 格式化时间为 HH:MM:SS
         var formattedTime = newTimeStr.length === 5 ? newTimeStr + ":00" : newTimeStr;
-
+        var oldRecord = history[originalIndex];
         history[originalIndex].amount = newAmount;
         history[originalIndex].note = newNoteStr !== "" ? newNoteStr : "未备注";
         history[originalIndex].time = formattedTime;
-
         saveHistory(history);
-        refreshAll();
+        // 同步更新 Supabase
+        if (currentUser && oldRecord._dbId) {
+          updateRecordInSupabase(oldRecord._dbId, {
+            amount: history[originalIndex].amount,
+            note: history[originalIndex].note,
+            date: history[originalIndex].date,
+            time: history[originalIndex].time
+          });
+        }
+        await refreshAll();
       }
 
-      // ---------- 开始新增一条记录 ----------
+      // ========== 新增记录 ==========
+
       function startAddRecord() {
-        if (isAddingNewRecord) return; // 防止重复点击
-
-        // 先取消所有现有编辑态
+        if (isAddingNewRecord) return;
         renderDayDetailContent();
-
         isAddingNewRecord = true;
-
-        // 在列表末尾创建一条编辑态的空记录
         var itemDiv = document.createElement("div");
         itemDiv.className = "day-record-item";
         itemDiv.setAttribute("data-editing", "true");
         itemDiv.setAttribute("data-is-new", "true");
-
         var editRow = document.createElement("div");
         editRow.className = "day-record-edit-row";
-
-        // 日期（只读）
         var dateLabel = document.createElement("span");
         dateLabel.className = "day-record-edit-date-label";
         var dateParts = currentDayDetailDate.split("-");
         dateLabel.textContent = parseInt(dateParts[1], 10) + "/" + parseInt(dateParts[2], 10);
-
-        // 时间（默认当前时间）
         var now = new Date();
         var defaultTime = now.getHours().toString().padStart(2, "0") + ":" + now.getMinutes().toString().padStart(2, "0");
-
         var timeInput = document.createElement("input");
         timeInput.type = "time";
         timeInput.className = "day-record-edit-input time-input";
         timeInput.value = defaultTime;
         timeInput.setAttribute("placeholder", "请选择时间");
-
-        // 金额输入框（空）
         var amountEditInput = document.createElement("input");
         amountEditInput.type = "text";
         amountEditInput.inputMode = "decimal";
@@ -1453,20 +1432,14 @@
           var dotIdx = val.indexOf(".");
           if (dotIdx !== -1) {
             val = val.substring(0, dotIdx + 1) + val.substring(dotIdx + 1).replace(/\./g, "");
-            if (val.substring(dotIdx + 1).length > 2) {
-              val = val.substring(0, dotIdx + 3);
-            }
+            if (val.substring(dotIdx + 1).length > 2) { val = val.substring(0, dotIdx + 3); }
           }
           this.value = val;
         });
-
-        // 备注输入框（空）
         var noteEditInput = document.createElement("input");
         noteEditInput.type = "text";
         noteEditInput.className = "day-record-edit-input note-input";
         noteEditInput.placeholder = "备注";
-
-        // 保存按钮
         var saveBtn = document.createElement("button");
         saveBtn.className = "day-record-edit-save";
         saveBtn.textContent = "✓";
@@ -1475,33 +1448,24 @@
           e.stopPropagation();
           saveNewRecord(timeInput.value.trim(), amountEditInput.value.trim(), noteEditInput.value.trim());
         });
-
-        // 取消按钮
         var cancelBtn = document.createElement("button");
         cancelBtn.className = "day-record-edit-cancel";
         cancelBtn.textContent = "✕";
         cancelBtn.title = "取消";
         cancelBtn.addEventListener("click", function (e) {
           e.stopPropagation();
-          // 取消新增：直接重新渲染，不留任何痕迹
           isAddingNewRecord = false;
           renderDayDetailContent();
         });
-
         editRow.appendChild(dateLabel);
         editRow.appendChild(timeInput);
         editRow.appendChild(amountEditInput);
         editRow.appendChild(noteEditInput);
         editRow.appendChild(saveBtn);
         editRow.appendChild(cancelBtn);
-
         itemDiv.appendChild(editRow);
         dayDetailListEl.appendChild(itemDiv);
-
-        // 自动聚焦金额输入框
         setTimeout(function () { amountEditInput.focus(); }, 50);
-
-        // Enter 保存
         timeInput.addEventListener("keydown", function (e) {
           if (e.key === "Enter") { e.preventDefault(); saveNewRecord(timeInput.value.trim(), amountEditInput.value.trim(), noteEditInput.value.trim()); }
         });
@@ -1511,53 +1475,45 @@
         noteEditInput.addEventListener("keydown", function (e) {
           if (e.key === "Enter") { e.preventDefault(); saveNewRecord(timeInput.value.trim(), amountEditInput.value.trim(), noteEditInput.value.trim()); }
         });
-
-        // 滚动到底部
         dayDetailListEl.scrollTop = dayDetailListEl.scrollHeight;
       }
 
-      // ---------- 保存新记录 ----------
-      function saveNewRecord(newTimeStr, newAmountStr, newNoteStr) {
-        // 校验时间不能为空
-        if (newTimeStr === "") {
-          alert("请选择时间");
-          return;
-        }
-
+      async function saveNewRecord(newTimeStr, newAmountStr, newNoteStr) {
+        if (newTimeStr === "") { alert("请选择时间"); return; }
         var newAmount = parseFloat(newAmountStr);
         if (isNaN(newAmount) || newAmount <= 0) return;
-
-        var history = loadHistory();
-
-        // 格式化时间为 HH:MM:SS
+        var history = await loadHistory();
         var formattedTime = newTimeStr.length === 5 ? newTimeStr + ":00" : newTimeStr;
-
         var newRecord = {
           amount: newAmount,
           note: newNoteStr !== "" ? newNoteStr : "未备注",
           time: formattedTime,
           date: currentDayDetailDate
         };
-
         history.push(newRecord);
         saveHistory(history);
-
+        // 同步到 Supabase
+        if (currentUser) {
+          var dbId = await saveToSupabase(newRecord);
+          if (dbId) { newRecord._dbId = dbId; saveHistory(history); }
+        }
         isAddingNewRecord = false;
-        refreshAll();
+        await refreshAll();
       }
 
-      // ---------- 关闭日明细浮层 ----------
+      // ========== 关闭浮层 ==========
+
       function closeDayDetail() {
         dayDetailOverlay.classList.add("hidden");
         currentDayDetailDate = null;
         isAddingNewRecord = false;
       }
 
-      // ---------- 月份面板：打开 ----------
+      // ========== 月份面板 ==========
+
       function openMonthPanel() {
         var available = getAvailableMonths();
         var currentYM = currentYear + "-" + currentMonth.toString().padStart(2, "0");
-
         monthPanelList.innerHTML = "";
         if (available.length === 0) {
           var emptyDiv = document.createElement("div");
@@ -1573,31 +1529,23 @@
             var y = parseInt(parts[0], 10);
             var m = parseInt(parts[1], 10);
             var label = y + "年" + m + "月";
-
             var itemDiv = document.createElement("div");
             itemDiv.className = "month-panel-item";
-            if (ym === currentYM) {
-              itemDiv.classList.add("active");
-            }
+            if (ym === currentYM) { itemDiv.classList.add("active"); }
             itemDiv.textContent = label;
             (function (year, month) {
-              itemDiv.addEventListener("click", function () {
-                selectMonth(year, month);
-              });
+              itemDiv.addEventListener("click", function () { selectMonth(year, month); });
             })(y, m);
             monthPanelList.appendChild(itemDiv);
           }
         }
-
         monthPanelOverlay.classList.remove("hidden");
       }
 
-      // ---------- 月份面板：关闭 ----------
       function closeMonthPanel() {
         monthPanelOverlay.classList.add("hidden");
       }
 
-      // ---------- 月份面板：选择月份 ----------
       function selectMonth(year, month) {
         currentYear = year;
         currentMonth = month;
@@ -1606,61 +1554,66 @@
         closeMonthPanel();
       }
 
-      // ---------- 渲染全部 ----------
-      function renderAll() {
+      // ========== 渲染全部 ==========
+
+      async function renderAll(forceRefresh) {
+        if (forceRefresh !== false) {
+          await refreshHistoryCache();
+        }
         updateMonthLabel();
         updateStatsCards();
         updateChart();
         renderDailyDetail();
-        // 兜底保险：确保 chartEmpty 和 dailyDetailSummary 严格互斥
-        var monthTotal = getMonthTotal(currentYear, currentMonth);
-        if (monthTotal > 0) {
+        var monthTotalVal = getMonthTotal(currentYear, currentMonth);
+        if (monthTotalVal > 0) {
           chartEmpty.classList.add("hidden");
         } else {
           chartEmpty.classList.remove("hidden");
         }
       }
 
-      // ---------- 初始化：默认显示当前月 ----------
-      function init() {
+      // ========== 初始化 ==========
+
+      async function init() {
+        // 主动检查登录状态（不依赖 window.__currentUser）
+        if (sharedSupabase && !currentUser) {
+          try {
+            var { data: sessionData } = await sharedSupabase.auth.getSession();
+            if (sessionData && sessionData.session && sessionData.session.user) {
+              currentUser = sessionData.session.user;
+              window.__currentUser = currentUser;
+            }
+          } catch (e) {
+            // 静默
+          }
+        }
+        await refreshHistoryCache();
         var today = new Date();
         currentYear = today.getFullYear();
         currentMonth = today.getMonth() + 1;
-        renderAll();
+        await renderAll(false);  // false = 不重复刷新缓存，init() 已提前刷新
       }
 
-      // ---------- 事件绑定 ----------
+      // ========== 事件绑定 ==========
+
       prevMonthBtn.addEventListener("click", goToPrevMonth);
       nextMonthBtn.addEventListener("click", goToNextMonth);
-
-      // 月份标签点击打开面板
-      monthLabel.addEventListener("click", openMonthPanel);
-
-      // 点击面板遮罩关闭
+      monthLabelEl.addEventListener("click", openMonthPanel);
       monthPanelOverlay.addEventListener("click", function (e) {
-        if (e.target === monthPanelOverlay) {
-          closeMonthPanel();
-        }
+        if (e.target === monthPanelOverlay) { closeMonthPanel(); }
       });
-
-      // 每日明细摘要点击切换
       dailyDetailSummary.addEventListener("click", toggleDailyDetail);
-
-      // 日明细浮层关闭
       dayDetailCloseBtn.addEventListener("click", closeDayDetail);
       dayDetailOverlay.addEventListener("click", function (e) {
-        if (e.target === dayDetailOverlay) {
-          closeDayDetail();
-        }
+        if (e.target === dayDetailOverlay) { closeDayDetail(); }
       });
-
-      // "+ 记一笔"按钮
       dayDetailAddBtn.addEventListener("click", function () {
         if (!currentDayDetailDate) return;
         startAddRecord();
       });
 
-      // ---------- 启动 ----------
+      // ========== 启动 ==========
+
       init();
     })();
   </script>
