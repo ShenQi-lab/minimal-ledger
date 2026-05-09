@@ -585,6 +585,14 @@
       width: 100%;
     }
 
+    .btn-primary {
+      flex: 2;
+    }
+
+    .btn-secondary {
+      flex: 1;
+    }
+
     .btn {
       flex: 1;
       height: 50px;
@@ -770,7 +778,6 @@
     <div class="button-group">
       <button class="btn btn-primary" id="addBtn">记一笔</button>
       <button class="btn btn-secondary" id="undoBtn">撤销</button>
-      <button class="btn btn-secondary" id="resetBtn">清零</button>
     </div>
 
     <!-- 预算设置弹窗 -->
@@ -800,18 +807,6 @@
         <div class="modal-btns">
           <button class="modal-btn modal-btn-cancel" id="undoCancelBtn">取消</button>
           <button class="modal-btn modal-btn-danger" id="undoConfirmBtn">确认撤销</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 清零确认弹窗 -->
-    <div class="modal-overlay hidden" id="resetConfirmModal">
-      <div class="modal-box">
-        <div class="modal-title">确认清零</div>
-        <div class="modal-desc">确定要清零今日所有记录吗？此操作不可恢复。</div>
-        <div class="modal-btns">
-          <button class="modal-btn modal-btn-cancel" id="resetCancelBtn">取消</button>
-          <button class="modal-btn modal-btn-danger" id="resetConfirmBtn">确认清零</button>
         </div>
       </div>
     </div>
@@ -899,7 +894,6 @@
       const amountInput = document.getElementById("amountInput");
       const addBtn = document.getElementById("addBtn");
       const undoBtn = document.getElementById("undoBtn");
-      const resetBtn = document.getElementById("resetBtn");
       const historyBtn = document.getElementById("historyBtn");
       const historyModal = document.getElementById("historyModal");
       const historyList = document.getElementById("historyList");
@@ -907,9 +901,6 @@
       const undoConfirmModal = document.getElementById("undoConfirmModal");
       const undoCancelBtn = document.getElementById("undoCancelBtn");
       const undoConfirmBtn = document.getElementById("undoConfirmBtn");
-      const resetConfirmModal = document.getElementById("resetConfirmModal");
-      const resetCancelBtn = document.getElementById("resetCancelBtn");
-      const resetConfirmBtn = document.getElementById("resetConfirmBtn");
 
       // ---------- localStorage key ----------
       const STORAGE_KEY = "minimal_ledger_total";
@@ -1116,27 +1107,6 @@
             return;
           }
         }
-      }
-
-      // ---------- 清零（弹出确认弹窗） ----------
-      function resetTotal() {
-        if (total === 0) return; // 已经是 0 无需操作
-        resetConfirmModal.classList.remove("hidden");
-      }
-
-      // ---------- 确认清零 ----------
-      function confirmReset() {
-        total = 0;
-        history = [];
-        saveToStorage();
-        updateDisplay();
-        triggerBounceAnimation("reset-flash");
-        resetConfirmModal.classList.add("hidden");
-      }
-
-      // ---------- 关闭清零确认弹窗 ----------
-      function closeResetConfirmModal() {
-        resetConfirmModal.classList.add("hidden");
       }
 
       // ---------- 输入过滤：实时过滤非数字字符 ----------
@@ -1427,7 +1397,6 @@
       // ---------- 按钮事件 ----------
       addBtn.addEventListener("click", addRecord);
       undoBtn.addEventListener("click", openUndoConfirmModal);
-      resetBtn.addEventListener("click", resetTotal);
       budgetSetBtn.addEventListener("click", openBudgetModal);
       budgetCancelBtn.addEventListener("click", closeBudgetModal);
       budgetConfirmBtn.addEventListener("click", confirmBudget);
@@ -1454,15 +1423,6 @@
       undoConfirmModal.addEventListener("click", function (e) {
         if (e.target === undoConfirmModal) {
           closeUndoConfirmModal();
-        }
-      });
-
-      // 清零确认弹窗事件
-      resetConfirmBtn.addEventListener("click", confirmReset);
-      resetCancelBtn.addEventListener("click", closeResetConfirmModal);
-      resetConfirmModal.addEventListener("click", function (e) {
-        if (e.target === resetConfirmModal) {
-          closeResetConfirmModal();
         }
       });
 
