@@ -1,5 +1,5 @@
 /* ==========================================
-极简记账本 V1.11.5 — Service Worker
+极简记账本 V1.11.6 — Service Worker
    HTML 文件：网络优先 (Network First) 策略
    其他静态资源：缓存优先 (Cache First) 策略
    自动更新：install 跳过等待 + activate 接管页面 +
@@ -10,17 +10,18 @@
 const CACHE_VERSION = 'cache-v' + new Date().getTime();
 
 // 需要预缓存的核心文件
+// 注意：这里保留你原来的固化流程，CORE_FILES 仍然只是“版本检测占位”概念
 var CORE_FILES = [
   "./",
   "index.html",
   "stats.html",
   "manifest.json",
   "icon.png",
-  "update-v1.11.5"
+  "update-v1.11.6"
 ];
 
 // HTML 文件名列表（用于判断网络优先策略）
-var HTML_FILES = ["index.html", "stats.html"];
+var HTML_FILES = ["index.html", "stats.html", "profile.html"];
 
 /* ---------- 判断请求是否为 HTML 或目录请求 ---------- */
 function isHtmlRequest(url) {
@@ -94,7 +95,7 @@ self.addEventListener("install", function (event) {
     caches.open(CACHE_VERSION).then(function (cache) {
       // HTML 文件用 cache.add() 配合 cache: 'reload' 单独预缓存，确保拿到服务器最新版本
       var htmlPromises = [];
-      var htmlUrls = ["./", "index.html", "stats.html"];
+      var htmlUrls = ["./", "index.html", "stats.html", "profile.html"];
       for (var i = 0; i < htmlUrls.length; i++) {
         htmlPromises.push(
           cache.add(new Request(htmlUrls[i], { cache: "reload" }))
@@ -102,7 +103,7 @@ self.addEventListener("install", function (event) {
       }
 
       // 其他文件用 cache.addAll() 正常预缓存
-      var otherUrls = ["manifest.json", "icon.png"];
+      var otherUrls = ["manifest.json", "icon.png", "favicon.ico"];
       var otherRequests = otherUrls.map(function (url) {
         return new Request(url);
       });
