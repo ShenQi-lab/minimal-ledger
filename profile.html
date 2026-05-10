@@ -361,9 +361,9 @@
       padding: 40px 0;
     }
 
-    .profile-content.hidden {
+    /* .profile-content.hidden {
       display: none;
-    }
+    } */ /* 不需要了，用 JS 控制 style.display */
 
     /* ---------- 底部导航栏 ---------- */
     .bottom-nav {
@@ -436,85 +436,89 @@
     <div class="profile-loading" id="profileLoading">加载中…</div>
 
     <!-- 内容区（加载完成后显示） -->
-    <div class="profile-content hidden" id="profileContent">
-      <div class="profile-avatar" id="profileAvatar">👤</div>
-      <div class="profile-name" id="profileName">未登录</div>
-      <div class="profile-subtitle" id="profileSubtitle">登录后开启您的记账之旅</div>
-    </div>
+    <div class="profile-content" id="profileContent" style="display: none;">
+      
+      <!-- 头像区 -->
+      <div class="profile-avatar-section">
+        <div class="profile-avatar" id="profileAvatar">👤</div>
+        <div class="profile-name" id="profileName">未登录</div>
+        <div class="profile-subtitle" id="profileSubtitle">登录后开启您的记账之旅</div>
+      </div>
 
-    <!-- 登录/退出按钮 -->
-    <button class="profile-login-btn" id="profileLoginBtn">点击登录</button>
+      <!-- 登录/退出按钮 -->
+      <button class="profile-login-btn" id="profileLoginBtn">点击登录</button>
 
-    <!-- 三栏功能卡片 -->
-    <div class="profile-cards">
-      <div class="profile-card">
-        <span class="profile-card-icon">💰</span>
-        <span class="profile-card-label">我的钱包</span>
-        <span class="profile-card-value muted" id="cardWallet">登录后查看</span>
+      <!-- 三栏功能卡片 -->
+      <div class="profile-cards">
+        <div class="profile-card">
+          <span class="profile-card-icon">💰</span>
+          <span class="profile-card-label">我的钱包</span>
+          <span class="profile-card-value muted" id="cardWallet">登录后查看</span>
+        </div>
+        <div class="profile-card">
+          <span class="profile-card-icon">📋</span>
+          <span class="profile-card-label">记账数据</span>
+          <span class="profile-card-value muted" id="cardRecords">登录后查看</span>
+        </div>
+        <div class="profile-card">
+          <span class="profile-card-icon">🛡️</span>
+          <span class="profile-card-label">数据安全</span>
+          <span class="profile-card-value muted" id="cardSecurity">登录后保障</span>
+        </div>
       </div>
-      <div class="profile-card">
-        <span class="profile-card-icon">📋</span>
-        <span class="profile-card-label">记账数据</span>
-        <span class="profile-card-value muted" id="cardRecords">登录后查看</span>
-      </div>
-      <div class="profile-card">
-        <span class="profile-card-icon">🛡️</span>
-        <span class="profile-card-label">数据安全</span>
-        <span class="profile-card-value muted" id="cardSecurity">登录后保障</span>
-      </div>
-    </div>
 
-    <!-- 菜单列表 -->
-    <div class="profile-menu">
-      <div class="profile-menu-item" data-action="personal">
-        <div class="profile-menu-item-left">
-          <span class="profile-menu-item-icon">👤</span>
-          <span class="profile-menu-item-label">个人信息</span>
+      <!-- 菜单列表 -->
+      <div class="profile-menu">
+        <div class="profile-menu-item" data-action="personal">
+          <div class="profile-menu-item-left">
+            <span class="profile-menu-item-icon">👤</span>
+            <span class="profile-menu-item-label">个人信息</span>
+          </div>
+          <div class="profile-menu-item-right">
+            <span class="profile-menu-item-value" id="menuPersonalValue">登录后查看</span>
+            <span class="profile-menu-item-arrow">❯</span>
+          </div>
         </div>
-        <div class="profile-menu-item-right">
-          <span class="profile-menu-item-value" id="menuPersonalValue">登录后查看</span>
-          <span class="profile-menu-item-arrow">❯</span>
+        <div class="profile-menu-item" data-action="backup">
+          <div class="profile-menu-item-left">
+            <span class="profile-menu-item-icon">☁️</span>
+            <span class="profile-menu-item-label">数据备份</span>
+          </div>
+          <div class="profile-menu-item-right">
+            <span class="profile-menu-item-value" id="menuBackupValue">登录后可用</span>
+            <span class="profile-menu-item-arrow">❯</span>
+          </div>
+        </div>
+        <div class="profile-menu-item" data-action="reminder">
+          <div class="profile-menu-item-left">
+            <span class="profile-menu-item-icon">🔔</span>
+            <span class="profile-menu-item-label">提醒设置</span>
+          </div>
+          <div class="profile-menu-item-right">
+            <span class="profile-menu-item-value" id="menuReminderValue">登录后可用</span>
+            <span class="profile-menu-item-arrow">❯</span>
+          </div>
+        </div>
+        <div class="profile-menu-item" data-action="help">
+          <div class="profile-menu-item-left">
+            <span class="profile-menu-item-icon">❓</span>
+            <span class="profile-menu-item-label">帮助与反馈</span>
+          </div>
+          <div class="profile-menu-item-right">
+            <span class="profile-menu-item-arrow">❯</span>
+          </div>
+        </div>
+        <div class="profile-menu-item" data-action="about">
+          <div class="profile-menu-item-left">
+            <span class="profile-menu-item-icon">ℹ️</span>
+            <span class="profile-menu-item-label">关于我们</span>
+          </div>
+          <div class="profile-menu-item-right">
+            <span class="profile-menu-item-arrow">❯</span>
+          </div>
         </div>
       </div>
-      <div class="profile-menu-item" data-action="backup">
-        <div class="profile-menu-item-left">
-          <span class="profile-menu-item-icon">☁️</span>
-          <span class="profile-menu-item-label">数据备份</span>
-        </div>
-        <div class="profile-menu-item-right">
-          <span class="profile-menu-item-value" id="menuBackupValue">登录后可用</span>
-          <span class="profile-menu-item-arrow">❯</span>
-        </div>
-      </div>
-      <div class="profile-menu-item" data-action="reminder">
-        <div class="profile-menu-item-left">
-          <span class="profile-menu-item-icon">🔔</span>
-          <span class="profile-menu-item-label">提醒设置</span>
-        </div>
-        <div class="profile-menu-item-right">
-          <span class="profile-menu-item-value" id="menuReminderValue">登录后可用</span>
-          <span class="profile-menu-item-arrow">❯</span>
-        </div>
-      </div>
-      <div class="profile-menu-item" data-action="help">
-        <div class="profile-menu-item-left">
-          <span class="profile-menu-item-icon">❓</span>
-          <span class="profile-menu-item-label">帮助与反馈</span>
-        </div>
-        <div class="profile-menu-item-right">
-          <span class="profile-menu-item-arrow">❯</span>
-        </div>
-      </div>
-      <div class="profile-menu-item" data-action="about">
-        <div class="profile-menu-item-left">
-          <span class="profile-menu-item-icon">ℹ️</span>
-          <span class="profile-menu-item-label">关于我们</span>
-        </div>
-        <div class="profile-menu-item-right">
-          <span class="profile-menu-item-arrow">❯</span>
-        </div>
-      </div>
-    </div>
+      
     </div>  <!-- 结束 profile-content -->
   </div>
 
@@ -797,8 +801,8 @@
 
       async function checkSession() {
         // 显示加载中，隐藏内容
-        document.getElementById('profileLoading').classList.remove('hidden');
-        document.getElementById('profileContent').classList.add('hidden');
+        document.getElementById('profileLoading').style.display = 'block';
+        document.getElementById('profileContent').style.display = 'none';
         
         try {
           var { data, error } = await supabase.auth.getSession();
@@ -817,8 +821,8 @@
         updateProfileUI();
         
         // 隐藏加载中，显示内容
-        document.getElementById('profileLoading').classList.add('hidden');
-        document.getElementById('profileContent').classList.remove('hidden');
+        document.getElementById('profileLoading').style.display = 'none';
+        document.getElementById('profileContent').style.display = 'block';
       }
 
       // ========== 菜单点击 ==========
@@ -864,8 +868,8 @@
       window.addEventListener('storage', function (e) {
         if (e.key === 'auth_state_changed') {
           // 显示加载中
-          document.getElementById('profileLoading').classList.remove('hidden');
-          document.getElementById('profileContent').classList.add('hidden');
+          document.getElementById('profileLoading').style.display = 'block';
+          document.getElementById('profileContent').style.display = 'none';
           
           supabase.auth.getSession().then(function (result) {
             var sessionData = result.data;
@@ -880,8 +884,8 @@
             updateProfileUI();
           }).finally(function () {
             // 隐藏加载中，显示内容
-            document.getElementById('profileLoading').classList.add('hidden');
-            document.getElementById('profileContent').classList.remove('hidden');
+            document.getElementById('profileLoading').style.display = 'none';
+            document.getElementById('profileContent').style.display = 'block';
           });
         }
       });
