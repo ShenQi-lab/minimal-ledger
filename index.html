@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <title>极简记账本 V1.11.12</title>
+  <title>极简记账本 V1.12.1</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
@@ -1101,50 +1101,35 @@
       async function afterLoginInit() {
         try {
           await runMigration();
-
-          // 修复：先读云端数据，以云端为基准
+          
+          // 先读本地数据（以本地为基准）
+          var localRecords = [];
+          try { 
+            var stored = localStorage.getItem(HISTORY_KEY); 
+            if (stored) localRecords = JSON.parse(stored); 
+          } catch (e) {}
+          
+          // 再读云端数据
           var cloudRecords = await loadFromSupabase();
-
+          
           if (cloudRecords && cloudRecords.length > 0) {
-            // 云端有数据 → 使用云端数据，本地数据只作为补充（未同步的记录）
-            var cloudDbIds = {};
-            for (var i = 0; i < cloudRecords.length; i++) {
-              if (cloudRecords[i]._dbId) {
-                cloudDbIds[cloudRecords[i]._dbId] = true;
-              }
-            }
-
-            // 读取本地数据，找出未同步的记录（没有 _dbId 的）
-            var localRecords = [];
-            try {
-              var stored = localStorage.getItem(HISTORY_KEY);
-              if (stored) localRecords = JSON.parse(stored);
-            } catch (e) { }
-
-            var unsyncedLocal = [];
+            // 本地已有的 _dbId 集合
+            var localDbIds = {};
             for (var i = 0; i < localRecords.length; i++) {
-              if (localRecords[i] && typeof localRecords[i].amount === "number" && !localRecords[i]._dbId) {
-                unsyncedLocal.push(localRecords[i]);
+              if (localRecords[i]._dbId) localDbIds[localRecords[i]._dbId] = true;
+            }
+            
+            // 把云端有但本地没有的加进来
+            for (var i = 0; i < cloudRecords.length; i++) {
+              if (cloudRecords[i]._dbId && !localDbIds[cloudRecords[i]._dbId]) {
+                localRecords.push(cloudRecords[i]);
               }
             }
-
-            // 合并：云端数据 + 本地未同步数据
-            history = cloudRecords.concat(unsyncedLocal);
-            console.log("[初始化] 使用云端数据 " + cloudRecords.length + " 条 + 本地未同步 " + unsyncedLocal.length + " 条");
-          } else {
-            // 云端为空 → 使用本地数据
-            var localRecords = [];
-            try {
-              var stored = localStorage.getItem(HISTORY_KEY);
-              if (stored) localRecords = JSON.parse(stored);
-            } catch (e) { }
-            history = localRecords.filter(function (v) {
-              return v && typeof v.amount === "number";
-            });
-            console.log("[初始化] 云端为空，使用本地数据 " + history.length + " 条");
           }
-
-          // 重算今日总支出
+          
+          history = localRecords.filter(function (v) { return v && typeof v.amount === "number"; });
+          
+          // 重算今日总额
           total = 0;
           var today = getDateString();
           for (var i = 0; i < history.length; i++) {
@@ -1154,9 +1139,9 @@
           }
           total = parseFloat(total.toFixed(2));
           saveToStorage();
-
+          
         } catch (err) {
-          console.error("[初始化] 加载云端数据异常，回退 localStorage:", err.message);
+          console.error("[初始化] 异常:", err.message);
           loadFromStorage();
         }
         updateDisplay();

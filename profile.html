@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="manifest" href="manifest.json">
-    <title>我的 · 极简记账本 V1.11.12</title>
+    <title>我的 · 极简记账本 V1.12.1</title>
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
@@ -716,47 +716,55 @@
                 var firstDay = getFirstDayOfMonth();
                 var nextMonthFirstDay = getNextMonthFirstDay();
 
+                console.log('[我的] loadStats 查询用户:', currentUser.id);
                 try {
-                    var sumResp = await supabase
+                    // 拉取全部记录，前端自己计算（避免 Supabase 聚合查询的读副本延迟问题）
+                    var resp = await supabase
                         .from('records')
-                        .select('amount')
-                        .eq('user_id', currentUser.id)
-                        .gte('date', firstDay)
-                        .lt('date', nextMonthFirstDay);
-
-                    if (token !== loadStatsToken || !currentUser) return;
-
-                    if (sumResp.error) throw sumResp.error;
-
-                    var total = 0;
-                    if (sumResp.data && sumResp.data.length > 0) {
-                        for (var i = 0; i < sumResp.data.length; i++) {
-                            total += parseFloat(sumResp.data[i].amount);
-                        }
-                    }
-                    cardWallet.textContent = formatAmount(total) + "元";
-                } catch (e) {
-                    if (token !== loadStatsToken) return;
-                    cardWallet.textContent = "--元";
-                }
-
-                try {
-                    var countResp = await supabase
-                        .from('records')
-                        .select('*', { count: 'exact', head: true })
+                        .select('id, amount, date')
                         .eq('user_id', currentUser.id);
 
                     if (token !== loadStatsToken || !currentUser) return;
+                    if (resp.error) throw resp.error;
 
-                    if (countResp.error) throw countResp.error;
-
-                    if (countResp.count !== null) {
-                        cardRecords.textContent = countResp.count + "条";
-                    } else {
-                        cardRecords.textContent = "0条";
+                    var cloudRecords = resp.data || [];
+                    var cloudDbIds = {};
+                    var cloudMonthTotal = 0;
+                    for (var i = 0; i < cloudRecords.length; i++) {
+                        var r = cloudRecords[i];
+                        cloudDbIds[r.id] = true;
+                        if (r.date >= firstDay && r.date < nextMonthFirstDay) {
+                            cloudMonthTotal += parseFloat(r.amount || 0);
+                        }
                     }
+
+                    // ===== 关键修改：合并本地数据，解决读副本延迟 =====
+                    var localRecords = [];
+                    try {
+                        var stored = localStorage.getItem('minimal_ledger_history');
+                        if (stored) localRecords = JSON.parse(stored);
+                    } catch (e) { }
+                    if (!Array.isArray(localRecords)) localRecords = [];
+
+                    var localMonthTotal = 0;
+                    var localExtraCount = 0;
+                    for (var i = 0; i < localRecords.length; i++) {
+                        var r = localRecords[i];
+                        if (!r || !r.date) continue;
+                        // 只合并云端没有的记录（避免重复）
+                        if (r._dbId && cloudDbIds[r._dbId]) continue;
+
+                        localExtraCount++;
+                        if (r.date >= firstDay && r.date < nextMonthFirstDay) {
+                            localMonthTotal += parseFloat(r.amount || 0);
+                        }
+                    }
+
+                    cardWallet.textContent = formatAmount(cloudMonthTotal + localMonthTotal) + "元";
+                    cardRecords.textContent = (cloudRecords.length + localExtraCount) + "条";
                 } catch (e) {
                     if (token !== loadStatsToken) return;
+                    cardWallet.textContent = "--元";
                     cardRecords.textContent = "--条";
                 }
 
@@ -972,7 +980,19 @@
                     loadStatsToken++;
                     clearTimeout(refreshTimer);
                     refreshTimer = setTimeout(function () {
-                        if (currentUser && supabase) {
+                        // 确保已登录，否则先获取 session
+                        if (!currentUser && supabase) {
+                            supabase.auth.getSession().then(function (result) {
+                                var sessionData = result.data;
+                                if (sessionData && sessionData.session && sessionData.session.user) {
+                                    currentUser = sessionData.session.user;
+                                    window.__currentUser = currentUser;
+                                }
+                                if (currentUser && supabase) {
+                                    loadStats();
+                                }
+                            });
+                        } else if (currentUser && supabase) {
                             loadStats();
                         }
                     }, 150);
@@ -1008,6 +1028,43 @@
 
             // ========== 启动 ==========
             checkSession();
+
+            // 从其他页面返回时强制刷新
+            window.addEventListener('pageshow', function () {
+                console.log('[我的] pageshow 触发');
+
+                // 第一次刷新（100ms）
+                setTimeout(function () {
+                    loadStatsToken++;
+                    if (currentUser && supabase) {
+                        loadStats();
+                    } else if (supabase) {
+                        supabase.auth.getSession().then(function (result) {
+                            if (result.data && result.data.session && result.data.session.user) {
+                                currentUser = result.data.session.user;
+                                window.__currentUser = currentUser;
+                                loadStats();
+                            }
+                        });
+                    }
+                }, 100);
+
+                // 第二次刷新（1500ms，解决 Supabase 读副本延迟）
+                setTimeout(function () {
+                    loadStatsToken++;
+                    if (currentUser && supabase) {
+                        loadStats();
+                    } else if (supabase) {
+                        supabase.auth.getSession().then(function (result) {
+                            if (result.data && result.data.session && result.data.session.user) {
+                                currentUser = result.data.session.user;
+                                window.__currentUser = currentUser;
+                                loadStats();
+                            }
+                        });
+                    }
+                }, 3000);
+            });
         })();
     </script>
 

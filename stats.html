@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <title>统计 · 极简记账本 V1.11.12</title>
+  <title>统计 · 极简记账本 V1.12.1</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
@@ -806,18 +806,19 @@
         // 已登录 → 只读云端数据，完全不碰本地数据
         if (currentUser && supabase) {
           _cachedHistory = null;
+          var cloudRecords = [];
           try {
             var { data, error } = await supabase
               .from('records')
               .select('id, amount, note, date, time')
               .eq('user_id', currentUser.id)
               .order('created_at', { ascending: true });
+            console.log('[统计] Supabase 查询用户:', currentUser.id, '结果:', data ? data.length : 0, '条');
 
             if (error) throw error;
 
             if (data && data.length > 0) {
-              // 只返回云端数据，不合并本地
-              return data.map(function (r) {
+              cloudRecords = data.map(function (r) {
                 return {
                   _dbId: r.id,
                   amount: parseFloat(r.amount),
@@ -827,13 +828,31 @@
                 };
               });
             }
-            // 云端为空，返回空数组（不是本地数据！）
-            return [];
           } catch (err) {
             console.error("[统计] Supabase 读取失败:", err.message);
-            // 云端失败时，返回空数组（不暴露本地数据）
-            return [];
           }
+
+          // ===== 关键修改：合并本地数据，解决读副本延迟 =====
+          var localRecords = loadFromLocalStorage();
+          var cloudDbIds = {};
+          for (var i = 0; i < cloudRecords.length; i++) {
+            if (cloudRecords[i]._dbId) cloudDbIds[cloudRecords[i]._dbId] = true;
+          }
+          var merged = cloudRecords.slice();
+          for (var i = 0; i < localRecords.length; i++) {
+            var local = localRecords[i];
+            // 本地有_dbId但云端没返回的（读副本滞后），或者没有_dbId的（未同步），合并进来
+            if (local._dbId && !cloudDbIds[local._dbId]) {
+              merged.push(local);
+            } else if (!local._dbId) {
+              merged.push(local);
+            }
+          }
+          // 按日期+时间排序
+          merged.sort(function (a, b) {
+            return (a.date + ' ' + a.time).localeCompare(b.date + ' ' + b.time);
+          });
+          return merged;
         }
 
         // 未登录 → 才读本地数据
@@ -1665,7 +1684,7 @@
         var today = new Date();
         currentYear = today.getFullYear();
         currentMonth = today.getMonth() + 1;
-        await renderAll(false);
+        await renderAll(true);
       }
 
       // ========== 事件绑定 ==========
@@ -1690,6 +1709,29 @@
 
       init();
 
+      // 从其他页面返回时强制刷新（解决跳转后数据不同步）
+      window.addEventListener('pageshow', function () {
+        console.log('[统计] pageshow 触发');
+
+        // 第一次刷新（100ms，快速响应）
+        setTimeout(function () {
+          _cachedHistory = null;
+          refreshHistoryCache().then(function () {
+            console.log('[统计] 第一次刷新，记录数:', _cachedHistory ? _cachedHistory.length : 0);
+            renderAll(true);
+          });
+        }, 100);
+
+        // 第二次刷新（1500ms，解决 Supabase 读副本延迟）
+        setTimeout(function () {
+          _cachedHistory = null;
+          refreshHistoryCache().then(function () {
+            console.log('[统计] 第二次刷新，记录数:', _cachedHistory ? _cachedHistory.length : 0);
+            renderAll(true);
+          });
+        }, 3000);
+      });
+
       // ---------- storage 事件监听（跨页面登录/退出同步） ----------
       // BroadcastChannel 监听（跨页面数据同步）
       var bc = new BroadcastChannel('minimal_ledger_sync');
@@ -1698,10 +1740,27 @@
         if (event.data && event.data.type === 'data_changed') {
           clearTimeout(refreshTimer);
           refreshTimer = setTimeout(function () {
-            _cachedHistory = null;
-            refreshHistoryCache().then(function () {
-              renderAll(false);
-            });
+            // 确保已登录，否则先获取 session
+            if (!currentUser && supabase) {
+              supabase.auth.getSession().then(function (result) {
+                var sessionData = result.data;
+                if (sessionData && sessionData.session && sessionData.session.user) {
+                  currentUser = sessionData.session.user;
+                  window.__currentUser = currentUser;
+                }
+                // 刷新数据
+                _cachedHistory = null;
+                refreshHistoryCache().then(function () {
+                  renderAll(false);
+                });
+              });
+            } else {
+              // 已登录，直接刷新
+              _cachedHistory = null;
+              refreshHistoryCache().then(function () {
+                renderAll(false);
+              });
+            }
           }, 150);
         }
       };
