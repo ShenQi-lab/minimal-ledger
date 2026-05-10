@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <title>统计 · 极简记账本 V1.11.4</title>
+  <title>统计 · 极简记账本 V1.11.5</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon.png">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -264,8 +266,13 @@
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
     }
 
     .day-detail-box {
@@ -636,6 +643,7 @@
         padding: 28px 18px 20px;
         gap: 18px;
       }
+
       .stat-card-value {
         font-size: 1.3rem;
       }
@@ -645,12 +653,14 @@
       .stat-card {
         padding: 12px 8px;
       }
+
       .stat-card-value {
         font-size: 1.1rem;
       }
     }
   </style>
 </head>
+
 <body>
 
   <div class="page">
@@ -735,12 +745,17 @@
     (function () {
       var SUPABASE_URL = 'https://zmryiekgosgjipnsyayj.supabase.co';
       var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptcnlpZWtnb3NnamlwbnN5YXlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMjcyNzQsImV4cCI6MjA5MzkwMzI3NH0.HAnHiz5x1EzwPpVyS8Df270UKvHjkW7LwG5UJiBOEHo';
-      var supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+      // 修复：优先使用已存在的 supabase 实例，避免重复创建
+      var supabase = null;
+      if (window.__supabase) {
+        supabase = window.__supabase;
+      } else if (window.supabase) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        window.__supabase = supabase;
+      }
 
-      // 尝试从 index.html 的全局变量获取用户状态（同一域下共享）
-      // 如果 index.html 未打开，则自行检查 session
-      var currentUser = (typeof window.__currentUser !== 'undefined' && window.__currentUser) || null;
-      var sharedSupabase = (typeof window.__supabase !== 'undefined') ? window.__supabase : supabase;
+      // 修复：currentUser 初始为 null，必须通过 checkSession() 获取
+      var currentUser = null;
 
       var HISTORY_KEY = "minimal_ledger_history";
 
@@ -775,33 +790,33 @@
 
       // ---------- loadHistory(): 统一入口，对上层透明 ----------
       async function loadHistory() {
-        // 先读本地数据（保底）
-        var localRecords = loadFromLocalStorage();
-        
-        // 尝试获取最新的用户状态
-        if (!currentUser && sharedSupabase) {
+        // 修复：必须先获取当前用户状态
+        if (!currentUser && supabase) {
           try {
-            var { data: sessionData } = await sharedSupabase.auth.getSession();
+            var { data: sessionData } = await supabase.auth.getSession();
             if (sessionData && sessionData.session && sessionData.session.user) {
               currentUser = sessionData.session.user;
               window.__currentUser = currentUser;
             }
           } catch (e) {
-            // 静默
+            console.error("[统计] 获取 session 失败:", e.message);
           }
         }
-        
-        // 已登录 → 尝试从 Supabase 读取
-        if (currentUser && sharedSupabase) {
+
+        // 已登录 → 只读云端数据，完全不碰本地数据
+        if (currentUser && supabase) {
           try {
-            var { data, error } = await sharedSupabase
+            var { data, error } = await supabase
               .from('records')
               .select('id, amount, note, date, time')
               .eq('user_id', currentUser.id)
               .order('created_at', { ascending: true });
+
             if (error) throw error;
+
             if (data && data.length > 0) {
-              var cloudRecords = data.map(function (r) {
+              // 只返回云端数据，不合并本地
+              return data.map(function (r) {
                 return {
                   _dbId: r.id,
                   amount: parseFloat(r.amount),
@@ -810,28 +825,18 @@
                   time: r.time || '--:--'
                 };
               });
-              
-              // 以本地为基准，云端补充
-              var localDbIds = {};
-              for (var i = 0; i < localRecords.length; i++) {
-                if (localRecords[i]._dbId) localDbIds[localRecords[i]._dbId] = true;
-              }
-              
-              var merged = localRecords.slice();
-              for (var i = 0; i < cloudRecords.length; i++) {
-                if (cloudRecords[i]._dbId && !localDbIds[cloudRecords[i]._dbId]) {
-                  merged.push(cloudRecords[i]);
-                }
-              }
-              return merged;
             }
+            // 云端为空，返回空数组（不是本地数据！）
+            return [];
           } catch (err) {
-            console.error("[统计] Supabase 读取失败，使用本地数据:", err.message);
+            console.error("[统计] Supabase 读取失败:", err.message);
+            // 云端失败时，返回空数组（不暴露本地数据）
+            return [];
           }
         }
-        
-        // 未登录或 Supabase 不可用 → 返回 localStorage 数据
-        return localRecords;
+
+        // 未登录 → 才读本地数据
+        return loadFromLocalStorage();
       }
 
       function loadFromLocalStorage() {
@@ -866,9 +871,9 @@
       // ========== 同步到 Supabase（编辑/删除/新增时调用）==========
 
       async function saveToSupabase(record) {
-        if (!currentUser || !sharedSupabase) return null;
+        if (!currentUser || !supabase) return null;
         try {
-          var { data, error } = await sharedSupabase
+          var { data, error } = await supabase
             .from('records')
             .insert([{
               user_id: currentUser.id,
@@ -888,9 +893,9 @@
       }
 
       async function updateRecordInSupabase(dbId, updatedData) {
-        if (!currentUser || !sharedSupabase || !dbId) return;
+        if (!currentUser || !supabase || !dbId) return;
         try {
-          await sharedSupabase
+          await supabase
             .from('records')
             .update({
               amount: updatedData.amount,
@@ -905,9 +910,9 @@
       }
 
       async function deleteRecordFromSupabase(dbId) {
-        if (!currentUser || !sharedSupabase || !dbId) return;
+        if (!currentUser || !supabase || !dbId) return;
         try {
-          await sharedSupabase
+          await supabase
             .from('records')
             .delete()
             .eq('id', dbId);
@@ -1598,23 +1603,31 @@
       // ========== 初始化 ==========
 
       async function init() {
-        // 主动检查登录状态（不依赖 window.__currentUser）
-        if (sharedSupabase && !currentUser) {
+        // 修复：强制检查登录状态（不依赖 window.__currentUser）
+        if (supabase) {
           try {
-            var { data: sessionData } = await sharedSupabase.auth.getSession();
+            var { data: sessionData } = await supabase.auth.getSession();
             if (sessionData && sessionData.session && sessionData.session.user) {
               currentUser = sessionData.session.user;
               window.__currentUser = currentUser;
+              console.log("[统计] 已登录用户:", currentUser.email);
+            } else {
+              currentUser = null;
+              window.__currentUser = null;
+              console.log("[统计] 未登录，使用本地数据");
             }
           } catch (e) {
-            // 静默
+            console.error("[统计] 获取 session 失败:", e.message);
+            currentUser = null;
+            window.__currentUser = null;
           }
         }
+
         await refreshHistoryCache();
         var today = new Date();
         currentYear = today.getFullYear();
         currentMonth = today.getMonth() + 1;
-        await renderAll(false);  // false = 不重复刷新缓存，init() 已提前刷新
+        await renderAll(false);
       }
 
       // ========== 事件绑定 ==========
@@ -1642,8 +1655,8 @@
       // ---------- storage 事件监听（跨页面登录/退出同步） ----------
       window.addEventListener('storage', function (e) {
         if (e.key === 'auth_state_changed') {
-          if (sharedSupabase) {
-            sharedSupabase.auth.getSession().then(function (result) {
+          if (supabase) {
+            supabase.auth.getSession().then(function (result) {
               var sessionData = result.data;
               if (sessionData && sessionData.session && sessionData.session.user) {
                 currentUser = sessionData.session.user;
@@ -1665,4 +1678,5 @@
   </script>
 
 </body>
+
 </html>

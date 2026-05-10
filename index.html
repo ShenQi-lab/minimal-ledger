@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <title>极简记账本 V1.11.4</title>
+  <title>极简记账本 V1.11.5</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon.png">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -115,10 +117,12 @@
       0% {
         transform: scale(1);
       }
+
       35% {
         transform: scale(1.18);
         color: var(--accent);
       }
+
       100% {
         transform: scale(1);
       }
@@ -132,10 +136,12 @@
       0% {
         transform: scale(1);
       }
+
       50% {
         transform: scale(0.92);
         color: #999;
       }
+
       100% {
         transform: scale(1);
       }
@@ -333,8 +339,13 @@
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
     }
 
     .modal-box {
@@ -729,6 +740,7 @@
     }
   </style>
 </head>
+
 <body>
 
   <div class="page" id="ledgerPage">
@@ -753,25 +765,13 @@
 
     <!-- 金额输入 -->
     <div class="input-wrapper">
-      <input
-        type="text"
-        class="amount-input"
-        id="amountInput"
-        placeholder="输入消费金额"
-        inputmode="decimal"
-        autocomplete="off"
-      >
+      <input type="text" class="amount-input" id="amountInput" placeholder="输入消费金额" inputmode="decimal"
+        autocomplete="off">
     </div>
 
     <!-- 备注输入 -->
     <div class="input-wrapper">
-      <input
-        type="text"
-        class="amount-input"
-        id="noteInput"
-        placeholder="买了什么（可选）"
-        autocomplete="off"
-      >
+      <input type="text" class="amount-input" id="noteInput" placeholder="买了什么（可选）" autocomplete="off">
     </div>
 
     <!-- 按钮组 -->
@@ -784,14 +784,8 @@
     <div class="modal-overlay hidden" id="budgetModal">
       <div class="modal-box">
         <div class="modal-title">设置今日预算</div>
-        <input
-          type="text"
-          class="modal-input"
-          id="budgetInput"
-          placeholder="输入预算金额"
-          inputmode="decimal"
-          autocomplete="off"
-        >
+        <input type="text" class="modal-input" id="budgetInput" placeholder="输入预算金额" inputmode="decimal"
+          autocomplete="off">
         <div class="modal-btns">
           <button class="modal-btn modal-btn-cancel" id="budgetCancelBtn">取消</button>
           <button class="modal-btn modal-btn-confirm" id="budgetConfirmBtn">确定</button>
@@ -824,7 +818,7 @@
       </div>
     </div>
 
-  <!-- 提示 -->
+    <!-- 提示 -->
     <p class="hint">数据自动保存 · 登录后云端同步 · 支持离线使用</p>
   </div>
 
@@ -883,7 +877,14 @@
       // Supabase 配置
       var SUPABASE_URL = 'https://zmryiekgosgjipnsyayj.supabase.co';
       var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptcnlpZWtnb3NnamlwbnN5YXlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMjcyNzQsImV4cCI6MjA5MzkwMzI3NH0.HAnHiz5x1EzwPpVyS8Df270UKvHjkW7LwG5UJiBOEHo';
-      var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      // 修复：优先使用已存在的 supabase 实例
+      var supabase = null;
+      if (window.__supabase) {
+        supabase = window.__supabase;
+      } else if (window.supabase) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        window.__supabase = supabase;
+      }
       var currentUser = null;
 
       // 定义为全局可访问（供 profile.html 跨页面读取）
@@ -1033,8 +1034,8 @@
             };
           });
         } catch (err) {
-          console.error("[Supabase] 读取数据失败，回退 localStorage:", err.message);
-          return null;
+          console.error("[Supabase] 读取数据失败:", err.message);
+          return [];  // ← 改为返回空数组
         }
       }
 
@@ -1101,36 +1102,49 @@
         try {
           await runMigration();
 
-          var localRecords = [];
-          try {
-            var stored = localStorage.getItem(HISTORY_KEY);
-            if (stored) localRecords = JSON.parse(stored);
-          } catch (e) {}
-
+          // 修复：先读云端数据，以云端为基准
           var cloudRecords = await loadFromSupabase();
 
-          if (cloudRecords === null) {
-            console.log("[初始化] 云端加载失败，使用本地数据");
-            history = localRecords;
-          } else {
-            var localDbIds = {};
-            for (var i = 0; i < localRecords.length; i++) {
-              if (localRecords[i]._dbId) {
-                localDbIds[localRecords[i]._dbId] = true;
-              }
-            }
-
-            var merged = localRecords.slice();
+          if (cloudRecords && cloudRecords.length > 0) {
+            // 云端有数据 → 使用云端数据，本地数据只作为补充（未同步的记录）
+            var cloudDbIds = {};
             for (var i = 0; i < cloudRecords.length; i++) {
-              if (cloudRecords[i]._dbId && !localDbIds[cloudRecords[i]._dbId]) {
-                merged.push(cloudRecords[i]);
+              if (cloudRecords[i]._dbId) {
+                cloudDbIds[cloudRecords[i]._dbId] = true;
               }
             }
 
-            history = merged;
-            console.log("[初始化] 合并完成，本地 " + localRecords.length + " 条 + 云端补充 " + (merged.length - localRecords.length) + " 条");
+            // 读取本地数据，找出未同步的记录（没有 _dbId 的）
+            var localRecords = [];
+            try {
+              var stored = localStorage.getItem(HISTORY_KEY);
+              if (stored) localRecords = JSON.parse(stored);
+            } catch (e) { }
+
+            var unsyncedLocal = [];
+            for (var i = 0; i < localRecords.length; i++) {
+              if (localRecords[i] && typeof localRecords[i].amount === "number" && !localRecords[i]._dbId) {
+                unsyncedLocal.push(localRecords[i]);
+              }
+            }
+
+            // 合并：云端数据 + 本地未同步数据
+            history = cloudRecords.concat(unsyncedLocal);
+            console.log("[初始化] 使用云端数据 " + cloudRecords.length + " 条 + 本地未同步 " + unsyncedLocal.length + " 条");
+          } else {
+            // 云端为空 → 使用本地数据
+            var localRecords = [];
+            try {
+              var stored = localStorage.getItem(HISTORY_KEY);
+              if (stored) localRecords = JSON.parse(stored);
+            } catch (e) { }
+            history = localRecords.filter(function (v) {
+              return v && typeof v.amount === "number";
+            });
+            console.log("[初始化] 云端为空，使用本地数据 " + history.length + " 条");
           }
 
+          // 重算今日总支出
           total = 0;
           var today = getDateString();
           for (var i = 0; i < history.length; i++) {
@@ -1665,4 +1679,5 @@
   </script>
 
 </body>
+
 </html>
