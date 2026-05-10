@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <title>统计 · 极简记账本 V1.10.2</title>
+  <title>统计 · 极简记账本 V1.10.3</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
   <link rel="icon" type="image/png" href="icon.png">
@@ -771,7 +771,10 @@
 
       // ---------- loadHistory(): 统一入口，对上层透明 ----------
       async function loadHistory() {
-        // 先尝试获取最新的用户状态
+        // 先读本地数据（保底）
+        var localRecords = loadFromLocalStorage();
+        
+        // 尝试获取最新的用户状态
         if (!currentUser && sharedSupabase) {
           try {
             var { data: sessionData } = await sharedSupabase.auth.getSession();
@@ -783,7 +786,8 @@
             // 静默
           }
         }
-        // 已登录 → 从 Supabase 读取
+        
+        // 已登录 → 尝试从 Supabase 读取
         if (currentUser && sharedSupabase) {
           try {
             var { data, error } = await sharedSupabase
@@ -792,23 +796,38 @@
               .eq('user_id', currentUser.id)
               .order('created_at', { ascending: true });
             if (error) throw error;
-            if (!data || data.length === 0) return [];
-            return data.map(function (r) {
-              return {
-                _dbId: r.id,
-                amount: parseFloat(r.amount),
-                note: r.note || '未备注',
-                date: r.date,
-                time: r.time || '--:--'
-              };
-            });
+            if (data && data.length > 0) {
+              var cloudRecords = data.map(function (r) {
+                return {
+                  _dbId: r.id,
+                  amount: parseFloat(r.amount),
+                  note: r.note || '未备注',
+                  date: r.date,
+                  time: r.time || '--:--'
+                };
+              });
+              
+              // 以本地为基准，云端补充
+              var localDbIds = {};
+              for (var i = 0; i < localRecords.length; i++) {
+                if (localRecords[i]._dbId) localDbIds[localRecords[i]._dbId] = true;
+              }
+              
+              var merged = localRecords.slice();
+              for (var i = 0; i < cloudRecords.length; i++) {
+                if (cloudRecords[i]._dbId && !localDbIds[cloudRecords[i]._dbId]) {
+                  merged.push(cloudRecords[i]);
+                }
+              }
+              return merged;
+            }
           } catch (err) {
-            console.error("[统计] Supabase 读取失败，回退 localStorage:", err.message);
-            // 读取失败，回退到 localStorage
+            console.error("[统计] Supabase 读取失败，使用本地数据:", err.message);
           }
         }
-        // 未登录或 Supabase 不可用 → 从 localStorage 读取
-        return loadFromLocalStorage();
+        
+        // 未登录或 Supabase 不可用 → 返回 localStorage 数据
+        return localRecords;
       }
 
       function loadFromLocalStorage() {
