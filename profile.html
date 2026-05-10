@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <title>我的 · 极简记账本 V1.11.0</title>
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icon.png">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #2c2c2c;
+      --text-light: #666666;
+      --accent: #FF8C42;
+      --accent-hover: #e67830;
+      --accent-active: #cc6a28;
+      --card-bg: #fafafa;
+      --shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+      --radius: 12px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial,
+        sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 80px;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 40px 28px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    /* ---------- 标题 ---------- */
+    .title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-light);
+      letter-spacing: 0.05em;
+    }
+
+    /* ---------- 头像区 ---------- */
+    .profile-avatar-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: #b0b0b0;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .profile-avatar.logged-in {
+      background: var(--accent);
+      color: #fff;
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .profile-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .profile-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-light);
+    }
+
+    /* ---------- 登录按钮 ---------- */
+    .profile-login-btn {
+      width: 100%;
+      height: 48px;
+      border: none;
+      border-radius: 24px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .profile-login-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .profile-login-btn:active {
+      transform: scale(0.97);
+    }
+
+    .profile-login-btn.logout {
+      background: #e0e0e0;
+      color: var(--text);
+    }
+
+    .profile-login-btn.logout:hover {
+      background: #d0d0d0;
+    }
+
+    /* ---------- 三栏功能卡片 ---------- */
+    .profile-cards {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .profile-card {
+      flex: 1;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px 10px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .profile-card-icon {
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .profile-card-label {
+      font-size: 0.72rem;
+      color: var(--text-light);
+      line-height: 1.3;
+    }
+
+    .profile-card-value {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .profile-card-value.muted {
+      color: #b0b0b0;
+      font-weight: 400;
+      font-size: 0.75rem;
+    }
+
+    /* ---------- 菜单列表 ---------- */
+    .profile-menu {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .profile-menu-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 16px;
+      background: #fff;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+      font-size: 0.95rem;
+    }
+
+    .profile-menu-item:last-child {
+      border-bottom: none;
+    }
+
+    .profile-menu-item:hover {
+      background: #fafafa;
+    }
+
+    .profile-menu-item:active {
+      background: #f0f0f0;
+    }
+
+    .profile-menu-item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .profile-menu-item-icon {
+      font-size: 1.1rem;
+      width: 22px;
+      text-align: center;
+    }
+
+    .profile-menu-item-label {
+      color: var(--text);
+    }
+
+    .profile-menu-item-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .profile-menu-item-value {
+      font-size: 0.82rem;
+      color: #b0b0b0;
+    }
+
+    .profile-menu-item-arrow {
+      color: #c0c0c0;
+      font-size: 0.8rem;
+    }
+
+    /* ---------- 登录弹窗 ---------- */
+    .login-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      animation: fadeIn 0.18s ease;
+    }
+
+    .login-modal-overlay.hidden {
+      display: none;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .login-modal-box {
+      background: #fff;
+      border-radius: 16px;
+      padding: 32px 24px 24px;
+      width: 320px;
+      max-width: 90vw;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+      text-align: center;
+    }
+
+    .login-modal-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+
+    .login-modal-input {
+      width: 100%;
+      height: 44px;
+      border: 2px solid #d5d5d5;
+      border-radius: 8px;
+      padding: 0 12px;
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+      outline: none;
+      transition: border-color 0.15s ease;
+      -webkit-appearance: none;
+    }
+
+    .login-modal-input:focus {
+      border-color: var(--accent);
+    }
+
+    .login-modal-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .login-modal-btn {
+      width: 100%;
+      height: 42px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .login-modal-btn:active {
+      transform: scale(0.97);
+    }
+
+    .login-modal-btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .login-modal-btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .login-modal-btn-secondary {
+      background: #f0f0f0;
+      color: var(--text);
+    }
+
+    .login-modal-btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .login-modal-close {
+      margin-top: 16px;
+      font-size: 0.85rem;
+      color: #999;
+      cursor: pointer;
+      background: none;
+      border: none;
+      transition: color 0.15s ease;
+    }
+
+    .login-modal-close:hover {
+      color: #666;
+    }
+
+    /* ---------- 加载状态 ---------- */
+    .profile-loading {
+      text-align: center;
+      color: var(--text-light);
+      font-size: 0.9rem;
+      padding: 20px 0;
+    }
+
+    /* ---------- 底部导航栏 ---------- */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 420px;
+      height: 56px;
+      background: #fff;
+      border-top: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 90;
+      box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: #b0b0b0;
+      font-size: 0.7rem;
+      padding: 4px 16px;
+      transition: color 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+      text-decoration: none;
+    }
+
+    .nav-item .nav-icon {
+      font-size: 1.35rem;
+      line-height: 1;
+    }
+
+    .nav-item.active {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ========== 移动端优化 ========== */
+    @media (max-width: 480px) {
+      .page {
+        padding: 28px 18px 20px;
+        gap: 20px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .profile-cards {
+        gap: 6px;
+      }
+      .profile-card {
+        padding: 12px 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page">
+    <h1 class="title">我的</h1>
+
+    <!-- 头像区 -->
+    <div class="profile-avatar-section">
+      <div class="profile-avatar" id="profileAvatar">👤</div>
+      <div class="profile-name" id="profileName">未登录</div>
+      <div class="profile-subtitle" id="profileSubtitle">登录后开启您的记账之旅</div>
+    </div>
+
+    <!-- 登录/退出按钮 -->
+    <button class="profile-login-btn" id="profileLoginBtn">点击登录</button>
+
+    <!-- 三栏功能卡片 -->
+    <div class="profile-cards">
+      <div class="profile-card">
+        <span class="profile-card-icon">💰</span>
+        <span class="profile-card-label">我的钱包</span>
+        <span class="profile-card-value muted" id="cardWallet">登录后查看</span>
+      </div>
+      <div class="profile-card">
+        <span class="profile-card-icon">📋</span>
+        <span class="profile-card-label">记账数据</span>
+        <span class="profile-card-value muted" id="cardRecords">登录后查看</span>
+      </div>
+      <div class="profile-card">
+        <span class="profile-card-icon">🛡️</span>
+        <span class="profile-card-label">数据安全</span>
+        <span class="profile-card-value muted" id="cardSecurity">登录后保障</span>
+      </div>
+    </div>
+
+    <!-- 菜单列表 -->
+    <div class="profile-menu">
+      <div class="profile-menu-item" data-action="personal">
+        <div class="profile-menu-item-left">
+          <span class="profile-menu-item-icon">👤</span>
+          <span class="profile-menu-item-label">个人信息</span>
+        </div>
+        <div class="profile-menu-item-right">
+          <span class="profile-menu-item-value" id="menuPersonalValue">登录后查看</span>
+          <span class="profile-menu-item-arrow">❯</span>
+        </div>
+      </div>
+      <div class="profile-menu-item" data-action="backup">
+        <div class="profile-menu-item-left">
+          <span class="profile-menu-item-icon">☁️</span>
+          <span class="profile-menu-item-label">数据备份</span>
+        </div>
+        <div class="profile-menu-item-right">
+          <span class="profile-menu-item-value" id="menuBackupValue">登录后可用</span>
+          <span class="profile-menu-item-arrow">❯</span>
+        </div>
+      </div>
+      <div class="profile-menu-item" data-action="reminder">
+        <div class="profile-menu-item-left">
+          <span class="profile-menu-item-icon">🔔</span>
+          <span class="profile-menu-item-label">提醒设置</span>
+        </div>
+        <div class="profile-menu-item-right">
+          <span class="profile-menu-item-value" id="menuReminderValue">登录后可用</span>
+          <span class="profile-menu-item-arrow">❯</span>
+        </div>
+      </div>
+      <div class="profile-menu-item" data-action="help">
+        <div class="profile-menu-item-left">
+          <span class="profile-menu-item-icon">❓</span>
+          <span class="profile-menu-item-label">帮助与反馈</span>
+        </div>
+        <div class="profile-menu-item-right">
+          <span class="profile-menu-item-arrow">❯</span>
+        </div>
+      </div>
+      <div class="profile-menu-item" data-action="about">
+        <div class="profile-menu-item-left">
+          <span class="profile-menu-item-icon">ℹ️</span>
+          <span class="profile-menu-item-label">关于我们</span>
+        </div>
+        <div class="profile-menu-item-right">
+          <span class="profile-menu-item-arrow">❯</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 登录弹窗 -->
+  <div class="login-modal-overlay hidden" id="loginModalOverlay">
+    <div class="login-modal-box">
+      <div class="login-modal-title">登录账号</div>
+      <input
+        type="email"
+        class="login-modal-input"
+        id="loginEmail"
+        placeholder="邮箱"
+        autocomplete="email"
+      >
+      <input
+        type="password"
+        class="login-modal-input"
+        id="loginPassword"
+        placeholder="密码"
+        autocomplete="current-password"
+      >
+      <div class="login-modal-btns">
+        <button class="login-modal-btn login-modal-btn-primary" id="loginModalLoginBtn">登录</button>
+        <button class="login-modal-btn login-modal-btn-secondary" id="loginModalRegisterBtn">注册</button>
+      </div>
+      <button class="login-modal-close" id="loginModalCloseBtn">✕ 关闭</button>
+    </div>
+  </div>
+
+  <!-- 底部导航 -->
+  <nav class="bottom-nav">
+    <a class="nav-item" href="index.html">
+      <span class="nav-icon">📝</span>
+      <span>记账</span>
+    </a>
+    <a class="nav-item" href="stats.html">
+      <span class="nav-icon">📊</span>
+      <span>统计</span>
+    </a>
+    <a class="nav-item active" href="profile.html">
+      <span class="nav-icon">👤</span>
+      <span>我的</span>
+    </a>
+  </nav>
+
+  <script>
+    (function () {
+      // ========== Supabase 初始化 ==========
+      var SUPABASE_URL = 'https://zmryiekgosgjipnsyayj.supabase.co';
+      var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptcnlpZWtnb3NnamlwbnN5YXlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMjcyNzQsImV4cCI6MjA5MzkwMzI3NH0.HAnHiz5x1EzwPpVyS8Df270UKvHjkW7LwG5UJiBOEHo';
+      var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      var currentUser = null;
+
+      // 共享全局状态
+      window.__supabase = supabase;
+      window.__currentUser = null;
+
+      // ========== DOM 元素 ==========
+      var profileAvatar = document.getElementById("profileAvatar");
+      var profileName = document.getElementById("profileName");
+      var profileSubtitle = document.getElementById("profileSubtitle");
+      var profileLoginBtn = document.getElementById("profileLoginBtn");
+      var cardWallet = document.getElementById("cardWallet");
+      var cardRecords = document.getElementById("cardRecords");
+      var cardSecurity = document.getElementById("cardSecurity");
+      var menuPersonalValue = document.getElementById("menuPersonalValue");
+      var menuBackupValue = document.getElementById("menuBackupValue");
+      var menuReminderValue = document.getElementById("menuReminderValue");
+
+      // 弹窗 DOM
+      var loginModalOverlay = document.getElementById("loginModalOverlay");
+      var loginEmail = document.getElementById("loginEmail");
+      var loginPassword = document.getElementById("loginPassword");
+      var loginModalLoginBtn = document.getElementById("loginModalLoginBtn");
+      var loginModalRegisterBtn = document.getElementById("loginModalRegisterBtn");
+      var loginModalCloseBtn = document.getElementById("loginModalCloseBtn");
+
+      // ========== 工具函数 ==========
+      function getDateString() {
+        var now = new Date();
+        var y = now.getFullYear();
+        var m = (now.getMonth() + 1).toString().padStart(2, "0");
+        var d = now.getDate().toString().padStart(2, "0");
+        return y + "-" + m + "-" + d;
+      }
+
+      function getFirstDayOfMonth() {
+        var now = new Date();
+        var y = now.getFullYear();
+        var m = (now.getMonth() + 1).toString().padStart(2, "0");
+        return y + "-" + m + "-01";
+      }
+
+      function maskEmail(email) {
+        if (!email) return "";
+        var atIndex = email.indexOf("@");
+        if (atIndex <= 0) return email;
+        var localPart = email.substring(0, atIndex);
+        var domain = email.substring(atIndex);
+        if (localPart.length <= 3) {
+          return localPart.charAt(0) + "****" + domain;
+        }
+        return localPart.substring(0, 3) + "****" + localPart.substring(localPart.length - 2) + domain;
+      }
+
+      function formatAmount(value) {
+        return parseFloat(value.toFixed(2));
+      }
+
+      // ========== 更新 UI ==========
+      function updateProfileUI() {
+        if (currentUser) {
+          // 已登录状态
+          var firstLetter = currentUser.email ? currentUser.email.charAt(0).toUpperCase() : "?";
+          profileAvatar.textContent = firstLetter;
+          profileAvatar.classList.add("logged-in");
+          profileName.textContent = maskEmail(currentUser.email);
+          profileSubtitle.textContent = "数据云端同步中";
+          profileLoginBtn.textContent = "退出登录";
+          profileLoginBtn.classList.add("logout");
+          cardWallet.classList.remove("muted");
+          cardRecords.classList.remove("muted");
+          cardSecurity.classList.remove("muted");
+          cardSecurity.textContent = "已保障";
+          menuPersonalValue.textContent = "";
+          menuBackupValue.textContent = "已开启";
+          menuReminderValue.textContent = "已开启";
+          window.__currentUser = currentUser;
+          // 加载 Supabase 统计数据
+          loadStats();
+        } else {
+          // 未登录状态
+          profileAvatar.textContent = "👤";
+          profileAvatar.classList.remove("logged-in");
+          profileName.textContent = "未登录";
+          profileSubtitle.textContent = "登录后开启您的记账之旅";
+          profileLoginBtn.textContent = "点击登录";
+          profileLoginBtn.classList.remove("logout");
+          cardWallet.textContent = "登录后查看";
+          cardWallet.classList.add("muted");
+          cardRecords.textContent = "登录后查看";
+          cardRecords.classList.add("muted");
+          cardSecurity.textContent = "登录后保障";
+          cardSecurity.classList.add("muted");
+          menuPersonalValue.textContent = "登录后查看";
+          menuBackupValue.textContent = "登录后可用";
+          menuReminderValue.textContent = "登录后可用";
+          window.__currentUser = null;
+        }
+      }
+
+      // ========== 加载 Supabase 统计数据 ==========
+      async function loadStats() {
+        if (!currentUser) return;
+        var firstDay = getFirstDayOfMonth();
+        try {
+          // 当月总支出
+          var { data: sumData, error: sumError } = await supabase
+            .from('records')
+            .select('amount')
+            .eq('user_id', currentUser.id)
+            .gte('date', firstDay);
+          if (!sumError && sumData) {
+            var total = 0;
+            for (var i = 0; i < sumData.length; i++) {
+              total += parseFloat(sumData[i].amount);
+            }
+            cardWallet.textContent = formatAmount(total) + "元";
+          } else {
+            cardWallet.textContent = "0元";
+          }
+        } catch (e) {
+          cardWallet.textContent = "--元";
+        }
+
+        try {
+          // 总记录数
+          var { count, error: countError } = await supabase
+            .from('records')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', currentUser.id);
+          if (!countError && count !== null) {
+            cardRecords.textContent = count + "条";
+          } else {
+            cardRecords.textContent = "0条";
+          }
+        } catch (e) {
+          cardRecords.textContent = "--条";
+        }
+      }
+
+      // ========== 弹窗控制 ==========
+      function openLoginModal() {
+        loginEmail.value = "";
+        loginPassword.value = "";
+        loginModalOverlay.classList.remove("hidden");
+        setTimeout(function () { loginEmail.focus(); }, 100);
+      }
+
+      function closeLoginModal() {
+        loginModalOverlay.classList.add("hidden");
+      }
+
+      // ========== 认证功能 ==========
+      async function handleLogin() {
+        var email = loginEmail.value.trim();
+        var password = loginPassword.value.trim();
+        if (!email || !password) {
+          alert("请输入邮箱和密码");
+          return;
+        }
+        loginModalLoginBtn.disabled = true;
+        loginModalRegisterBtn.disabled = true;
+        loginModalLoginBtn.textContent = "登录中…";
+        try {
+          var { data, error } = await supabase.auth.signInWithPassword({ email: email, password: password });
+          if (error) throw error;
+          if (data && data.user) {
+            currentUser = data.user;
+            updateProfileUI();
+            closeLoginModal();
+            // 通知其他页面
+            localStorage.setItem('auth_state_changed', Date.now());
+          }
+        } catch (err) {
+          alert("登录失败: " + err.message);
+        } finally {
+          loginModalLoginBtn.disabled = false;
+          loginModalRegisterBtn.disabled = false;
+          loginModalLoginBtn.textContent = "登录";
+        }
+      }
+
+      async function handleRegister() {
+        var email = loginEmail.value.trim();
+        var password = loginPassword.value.trim();
+        if (!email || !password) {
+          alert("请输入邮箱和密码");
+          return;
+        }
+        if (password.length < 6) {
+          alert("密码至少 6 位");
+          return;
+        }
+        loginModalLoginBtn.disabled = true;
+        loginModalRegisterBtn.disabled = true;
+        loginModalRegisterBtn.textContent = "注册中…";
+        try {
+          var { data, error } = await supabase.auth.signUp({ email: email, password: password });
+          if (error) throw error;
+          if (data && data.user) {
+            if (data.session) {
+              currentUser = data.user;
+              updateProfileUI();
+              closeLoginModal();
+              localStorage.setItem('auth_state_changed', Date.now());
+            } else {
+              alert("注册成功！请检查邮箱确认（部分邮箱需验证），然后在此登录。");
+            }
+          } else {
+            alert("注册成功！请在此登录。");
+          }
+        } catch (err) {
+          alert("注册失败: " + err.message);
+        } finally {
+          loginModalLoginBtn.disabled = false;
+          loginModalRegisterBtn.disabled = false;
+          loginModalRegisterBtn.textContent = "注册";
+        }
+      }
+
+      async function handleLogout() {
+        if (!confirm("确定要退出登录吗？")) return;
+        await supabase.auth.signOut();
+        currentUser = null;
+        updateProfileUI();
+        // 通知其他页面
+        localStorage.setItem('auth_state_changed', Date.now());
+      }
+
+      async function checkSession() {
+        try {
+          var { data, error } = await supabase.auth.getSession();
+          if (error) throw error;
+          if (data && data.session && data.session.user) {
+            currentUser = data.session.user;
+          } else {
+            currentUser = null;
+          }
+        } catch (err) {
+          console.error("[个人中心] Session 检查失败:", err.message);
+          currentUser = null;
+        }
+        updateProfileUI();
+      }
+
+      // ========== 菜单点击 ==========
+      var menuItems = document.querySelectorAll(".profile-menu-item");
+      for (var i = 0; i < menuItems.length; i++) {
+        menuItems[i].addEventListener("click", function () {
+          var action = this.getAttribute("data-action");
+          if (action === "personal" || action === "backup" || action === "reminder") {
+            if (!currentUser) {
+              alert("请先登录");
+              return;
+            }
+            // 已登录：功能开发中
+            alert("功能开发中");
+          } else if (action === "help" || action === "about") {
+            alert("功能开发中");
+          }
+        });
+      }
+
+      // ========== 按钮事件 ==========
+      profileLoginBtn.addEventListener("click", function () {
+        if (currentUser) {
+          handleLogout();
+        } else {
+          openLoginModal();
+        }
+      });
+
+      loginModalLoginBtn.addEventListener("click", handleLogin);
+      loginModalRegisterBtn.addEventListener("click", handleRegister);
+      loginModalCloseBtn.addEventListener("click", closeLoginModal);
+
+      loginModalOverlay.addEventListener("click", function (e) {
+        if (e.target === loginModalOverlay) closeLoginModal();
+      });
+
+      loginPassword.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); handleLogin(); }
+      });
+
+      // ========== storage 事件监听 ==========
+      window.addEventListener('storage', function (e) {
+        if (e.key === 'auth_state_changed') {
+          supabase.auth.getSession().then(function (result) {
+            var sessionData = result.data;
+            if (sessionData && sessionData.session && sessionData.session.user) {
+              currentUser = sessionData.session.user;
+            } else {
+              currentUser = null;
+            }
+            updateProfileUI();
+          }).catch(function () {
+            currentUser = null;
+            updateProfileUI();
+          });
+        }
+      });
+
+      // ========== 启动 ==========
+      checkSession();
+    })();
+  </script>
+
+</body>
+</html>

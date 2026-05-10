@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <title>统计 · 极简记账本 V1.10.3</title>
+  <title>统计 · 极简记账本 V1.11.0</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
   <link rel="icon" type="image/png" href="icon.png">
@@ -38,7 +38,7 @@
       background-color: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding-bottom: 64px;
+      padding-bottom: 80px;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
       -webkit-user-select: none;
@@ -723,6 +723,10 @@
     <a class="nav-item active" href="stats.html">
       <span class="nav-icon">📊</span>
       <span>统计</span>
+    </a>
+    <a class="nav-item" href="profile.html">
+      <span class="nav-icon">👤</span>
+      <span>我的</span>
     </a>
   </nav>
 
@@ -1634,6 +1638,29 @@
       // ========== 启动 ==========
 
       init();
+
+      // ---------- storage 事件监听（跨页面登录/退出同步） ----------
+      window.addEventListener('storage', function (e) {
+        if (e.key === 'auth_state_changed') {
+          if (sharedSupabase) {
+            sharedSupabase.auth.getSession().then(function (result) {
+              var sessionData = result.data;
+              if (sessionData && sessionData.session && sessionData.session.user) {
+                currentUser = sessionData.session.user;
+                window.__currentUser = currentUser;
+              } else {
+                currentUser = null;
+                window.__currentUser = null;
+              }
+              refreshHistoryCache().then(function () { renderAll(false); });
+            }).catch(function () {
+              currentUser = null;
+              window.__currentUser = null;
+              refreshHistoryCache().then(function () { renderAll(false); });
+            });
+          }
+        }
+      });
     })();
   </script>
 

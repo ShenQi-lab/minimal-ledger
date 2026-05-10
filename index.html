@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <title>极简记账本 V1.10.3</title>
+  <title>极简记账本 V1.11.0</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
   <link rel="icon" type="image/png" href="icon.png">
@@ -41,7 +41,7 @@
       background-color: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding-bottom: 64px;
+      padding-bottom: 80px;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
       -webkit-user-select: none;
@@ -64,134 +64,6 @@
       font-weight: 600;
       color: var(--text-light);
       letter-spacing: 0.05em;
-    }
-
-    /* ---------- 登录区 ---------- */
-    .auth-area {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .auth-area.hidden {
-      display: none;
-    }
-
-    .auth-form.hidden {
-      display: none;
-    }
-
-    .auth-form {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      width: 100%;
-    }
-
-    .auth-input {
-      width: 100%;
-      height: 40px;
-      border: 2px solid var(--input-border);
-      border-radius: 8px;
-      padding: 0 12px;
-      font-size: 0.95rem;
-      outline: none;
-      transition: border-color 0.2s ease;
-      -webkit-appearance: none;
-    }
-
-    .auth-input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(255, 140, 66, 0.12);
-    }
-
-    .auth-btns {
-      display: flex;
-      gap: 8px;
-    }
-
-    .auth-btn {
-      flex: 1;
-      height: 38px;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s ease, transform 0.1s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .auth-btn:active {
-      transform: scale(0.96);
-    }
-
-    .auth-btn-login {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .auth-btn-login:hover {
-      background: var(--accent-hover);
-    }
-
-    .auth-btn-register {
-      background: #f0f0f0;
-      color: var(--text-light);
-    }
-
-    .auth-btn-register:hover {
-      background: #e0e0e0;
-    }
-
-    .auth-user-info {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      padding: 8px 14px;
-      background: #fff8f3;
-      border-radius: 8px;
-      border: 1px solid #ffe0cc;
-    }
-
-    .auth-user-info.hidden {
-      display: none;
-    }
-
-    .auth-user-email {
-      font-size: 0.85rem;
-      color: var(--text);
-      font-weight: 500;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .auth-logout-btn {
-      font-size: 0.8rem;
-      color: #999;
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 4px 8px;
-      border-radius: 4px;
-      flex-shrink: 0;
-      transition: color 0.15s ease, background 0.15s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .auth-logout-btn:hover {
-      color: #e04848;
-      background: #fff0f0;
-    }
-
-    .auth-loading {
-      text-align: center;
-      font-size: 0.85rem;
-      color: var(--text-light);
-      padding: 8px 0;
     }
 
     /* ---------- 总支出显示区 ---------- */
@@ -700,7 +572,6 @@
       font-size: 1rem;
     }
 
-    /* 隐藏 number 输入框的上下箭头 */
     .amount-input::-webkit-inner-spin-button,
     .amount-input::-webkit-outer-spin-button {
       -webkit-appearance: none;
@@ -867,38 +738,6 @@
       <button class="history-btn" id="historyBtn">📋 历史</button>
     </div>
 
-    <!-- 登录/注册区域 -->
-    <div class="auth-area" id="authArea">
-      <!-- 未登录时的表单 -->
-      <div class="auth-form" id="authForm">
-        <input
-          type="email"
-          class="auth-input"
-          id="authEmail"
-          placeholder="邮箱"
-          autocomplete="email"
-        >
-        <input
-          type="password"
-          class="auth-input"
-          id="authPassword"
-          placeholder="密码"
-          autocomplete="current-password"
-        >
-        <div class="auth-btns">
-          <button class="auth-btn auth-btn-login" id="loginBtn">登录</button>
-          <button class="auth-btn auth-btn-register" id="registerBtn">注册</button>
-        </div>
-      </div>
-      <!-- 已登录时显示 -->
-      <div class="auth-user-info hidden" id="authUserInfo">
-        <span class="auth-user-email" id="authUserEmail"></span>
-        <button class="auth-logout-btn" id="logoutBtn">退出</button>
-      </div>
-      <!-- 加载中 -->
-      <div class="auth-loading hidden" id="authLoading">检查登录状态…</div>
-    </div>
-
     <!-- 今日支出显示 -->
     <div class="display-area" id="displayArea">
       <span class="display-label">今日支出</span>
@@ -989,15 +828,19 @@
     <p class="hint">数据自动保存 · 登录后云端同步 · 支持离线使用</p>
   </div>
 
-  <!-- 底部导航栏 -->
+  <!-- 底部导航栏（三栏） -->
   <nav class="bottom-nav">
-    <a class="nav-item active" href="index.html" id="navLedger">
+    <a class="nav-item active" href="index.html">
       <span class="nav-icon">📝</span>
       <span>记账</span>
     </a>
-    <a class="nav-item" href="stats.html" id="navStats">
+    <a class="nav-item" href="stats.html">
       <span class="nav-icon">📊</span>
       <span>统计</span>
+    </a>
+    <a class="nav-item" href="profile.html">
+      <span class="nav-icon">👤</span>
+      <span>我的</span>
     </a>
   </nav>
 
@@ -1043,7 +886,7 @@
       var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       var currentUser = null;
 
-      // 定义为全局可访问（供 stats.html 跨页面读取）
+      // 定义为全局可访问（供 profile.html 跨页面读取）
       window.__supabase = supabase;
       window.__currentUser = null;
 
@@ -1067,18 +910,6 @@
       var undoConfirmModal = document.getElementById("undoConfirmModal");
       var undoCancelBtn = document.getElementById("undoCancelBtn");
       var undoConfirmBtn = document.getElementById("undoConfirmBtn");
-
-      // 登录相关 DOM
-      var authArea = document.getElementById("authArea");
-      var authForm = document.getElementById("authForm");
-      var authEmail = document.getElementById("authEmail");
-      var authPassword = document.getElementById("authPassword");
-      var loginBtn = document.getElementById("loginBtn");
-      var registerBtn = document.getElementById("registerBtn");
-      var authUserInfo = document.getElementById("authUserInfo");
-      var authUserEmail = document.getElementById("authUserEmail");
-      var logoutBtn = document.getElementById("logoutBtn");
-      var authLoading = document.getElementById("authLoading");
 
       // ---------- localStorage key ----------
       var STORAGE_KEY = "minimal_ledger_total";
@@ -1175,14 +1006,13 @@
         localStorage.setItem(LAST_DATE_KEY, getDateString());
       }
 
-      // ---------- 格式化金额：保留两位小数，去掉末尾多余的零 ----------
+      // ---------- 格式化金额 ----------
       function formatAmount(value) {
         return parseFloat(value.toFixed(2));
       }
 
       // ========== Supabase 数据读写 ==========
 
-      // ---------- 从 Supabase 读取当前用户的所有记录 ----------
       async function loadFromSupabase() {
         if (!currentUser) return [];
         try {
@@ -1204,11 +1034,10 @@
           });
         } catch (err) {
           console.error("[Supabase] 读取数据失败，回退 localStorage:", err.message);
-          return null; // null 表示读取失败
+          return null;
         }
       }
 
-      // ---------- 单条记录插入 Supabase ----------
       async function saveToSupabase(record) {
         if (!currentUser) return;
         try {
@@ -1224,7 +1053,6 @@
             .select('id')
             .single();
           if (error) throw error;
-          // 返回 Supabase 生成的 id，保存到本地记录中用于后续更新/删除
           return data ? (data.id || (Array.isArray(data) && data[0] && data[0].id)) : null;
         } catch (err) {
           console.error("[Supabase] 保存失败，静默降级:", err.message);
@@ -1232,7 +1060,6 @@
         }
       }
 
-      // ---------- 按 id 更新单条记录 ----------
       async function updateRecordInSupabase(dbId, updatedData) {
         if (!currentUser || !dbId) return;
         try {
@@ -1251,7 +1078,6 @@
         }
       }
 
-      // ---------- 按 id 删除单条记录 ----------
       async function deleteRecordFromSupabase(dbId) {
         if (!currentUser || !dbId) return;
         try {
@@ -1265,125 +1091,76 @@
         }
       }
 
-      // ========== 认证功能 ==========
+      // ========== 认证功能（内部，UI已移至profile.html） ==========
 
-      // ---------- 更新登录 UI ----------
-      function updateAuthUI() {
-        if (currentUser) {
-          authForm.classList.add("hidden");
-          authUserInfo.classList.remove("hidden");
-          authLoading.classList.add("hidden");  // ← 确保加载文字隐藏
-          authUserEmail.textContent = currentUser.email;
-          window.__currentUser = currentUser;
-        } else {
-          authForm.classList.remove("hidden");
-          authUserInfo.classList.add("hidden");
-          authLoading.classList.add("hidden");  // ← 确保加载文字隐藏
-          window.__currentUser = null;
-        }
-      }
+      // 当前页面不再显示登录UI，但保留认证逻辑以支持数据同步
+      // checkSession() 在页面加载时检查登录状态，自动同步数据
 
-      // ---------- 登录 ----------
-      async function handleLogin() {
-        var email = authEmail.value.trim();
-        var password = authPassword.value.trim();
-        if (!email || !password) {
-          alert("请输入邮箱和密码");
-          return;
-        }
-        loginBtn.disabled = true;
-        registerBtn.disabled = true;
-        loginBtn.textContent = "登录中…";
+      // ---------- 登录后初始化 ----------
+      async function afterLoginInit() {
         try {
-          var { data, error } = await supabase.auth.signInWithPassword({ email: email, password: password });
-          if (error) throw error;
-          if (data && data.user) {
-            currentUser = data.user;
-            updateAuthUI();
-            authPassword.value = "";
-            await afterLoginInit();
-          }
-        } catch (err) {
-          alert("登录失败: " + err.message);
-        } finally {
-          loginBtn.disabled = false;
-          registerBtn.disabled = false;
-          loginBtn.textContent = "登录";
-        }
-      }
+          await runMigration();
 
-      // ---------- 注册 ----------
-      async function handleRegister() {
-        var email = authEmail.value.trim();
-        var password = authPassword.value.trim();
-        if (!email || !password) {
-          alert("请输入邮箱和密码");
-          return;
-        }
-        if (password.length < 6) {
-          alert("密码至少 6 位");
-          return;
-        }
-        loginBtn.disabled = true;
-        registerBtn.disabled = true;
-        registerBtn.textContent = "注册中…";
-        try {
-          var { data, error } = await supabase.auth.signUp({ email: email, password: password });
-          if (error) throw error;
-          if (data && data.user) {
-            // 部分情况下注册后自动登录
-            if (data.session) {
-              currentUser = data.user;
-              updateAuthUI();
-              authPassword.value = "";
-              await afterLoginInit();
-            } else {
-              alert("注册成功！请检查邮箱确认（部分邮箱需验证），然后在此登录。");
-            }
+          var localRecords = [];
+          try {
+            var stored = localStorage.getItem(HISTORY_KEY);
+            if (stored) localRecords = JSON.parse(stored);
+          } catch (e) {}
+
+          var cloudRecords = await loadFromSupabase();
+
+          if (cloudRecords === null) {
+            console.log("[初始化] 云端加载失败，使用本地数据");
+            history = localRecords;
           } else {
-            alert("注册成功！请在此登录。");
+            var localDbIds = {};
+            for (var i = 0; i < localRecords.length; i++) {
+              if (localRecords[i]._dbId) {
+                localDbIds[localRecords[i]._dbId] = true;
+              }
+            }
+
+            var merged = localRecords.slice();
+            for (var i = 0; i < cloudRecords.length; i++) {
+              if (cloudRecords[i]._dbId && !localDbIds[cloudRecords[i]._dbId]) {
+                merged.push(cloudRecords[i]);
+              }
+            }
+
+            history = merged;
+            console.log("[初始化] 合并完成，本地 " + localRecords.length + " 条 + 云端补充 " + (merged.length - localRecords.length) + " 条");
           }
+
+          total = 0;
+          var today = getDateString();
+          for (var i = 0; i < history.length; i++) {
+            if (history[i].date === today) {
+              total += history[i].amount;
+            }
+          }
+          total = parseFloat(total.toFixed(2));
+          saveToStorage();
+
         } catch (err) {
-          alert("注册失败: " + err.message);
-        } finally {
-          loginBtn.disabled = false;
-          registerBtn.disabled = false;
-          registerBtn.textContent = "注册";
+          console.error("[初始化] 加载云端数据异常，回退 localStorage:", err.message);
+          loadFromStorage();
         }
-      }
-
-      // ---------- 退出 ----------
-      async function handleLogout() {
-        await supabase.auth.signOut();
-        currentUser = null;
-        window.__currentUser = null;
-        updateAuthUI();
-        // 退出后回退到 localStorage 模式，重新加载本地数据
-        history = [];
-        total = 0;
-        loadFromStorage();
         updateDisplay();
-        console.log("[认证] 已退出，回退到 localStorage 模式");
       }
 
-      // ========== 数据迁移 ==========
-
-      // ---------- 检查并执行数据迁移 ----------
+      // ---------- 数据迁移 ----------
       async function runMigration() {
         if (!currentUser) return;
-        // 已迁移过
         if (localStorage.getItem(MIGRATED_KEY) === "true") {
           console.log("[迁移] 已迁移过，跳过");
           return;
         }
-        // 检查本地是否有旧数据
         var storedHistory = localStorage.getItem(HISTORY_KEY);
         if (!storedHistory) {
           console.log("[迁移] 本地无旧数据，跳过");
           localStorage.setItem(MIGRATED_KEY, "true");
           return;
         }
-        // 检查云端是否已有该用户的数据（多设备防重复）
         try {
           var { count, error } = await supabase
             .from('records')
@@ -1399,7 +1176,6 @@
           console.error("[迁移] 检查云端失败，跳过迁移:", err.message);
           return;
         }
-        // 解析本地数据
         var localRecords = [];
         try {
           var parsed = JSON.parse(storedHistory);
@@ -1415,7 +1191,6 @@
           localStorage.setItem(MIGRATED_KEY, "true");
           return;
         }
-        // 逐条插入 Supabase
         console.log("[迁移] 开始迁移 " + localRecords.length + " 条记录…");
         var successCount = 0;
         for (var i = 0; i < localRecords.length; i++) {
@@ -1440,90 +1215,27 @@
         console.log("[迁移] 完成，成功 " + successCount + "/" + localRecords.length + " 条");
       }
 
-      // ---------- 登录后初始化（加载云端数据 + 迁移 + 同步到 localStorage） ----------
-      async function afterLoginInit() {
-        try {
-          // 先执行迁移
-          await runMigration();
-          
-          // 先读取本地数据（保底）
-          var localRecords = [];
-          try {
-            var stored = localStorage.getItem(HISTORY_KEY);
-            if (stored) localRecords = JSON.parse(stored);
-          } catch (e) {}
-          
-          // 从 Supabase 加载云端数据
-          var cloudRecords = await loadFromSupabase();
-          
-          if (cloudRecords === null) {
-            // 读取失败，直接用本地数据
-            console.log("[初始化] 云端加载失败，使用本地数据");
-            history = localRecords;
-          } else {
-            // 以本地数据为基准，云端只补充本地没有的（按 _dbId 判断）
-            var localDbIds = {};
-            for (var i = 0; i < localRecords.length; i++) {
-              if (localRecords[i]._dbId) {
-                localDbIds[localRecords[i]._dbId] = true;
-              }
-            }
-            
-            var merged = localRecords.slice();
-            for (var i = 0; i < cloudRecords.length; i++) {
-              if (cloudRecords[i]._dbId && !localDbIds[cloudRecords[i]._dbId]) {
-                merged.push(cloudRecords[i]);
-              }
-            }
-            
-            history = merged;
-            console.log("[初始化] 合并完成，本地 " + localRecords.length + " 条 + 云端补充 " + (merged.length - localRecords.length) + " 条");
-          }
-          
-          // 重算今日总支出
-          total = 0;
-          var today = getDateString();
-          for (var i = 0; i < history.length; i++) {
-            if (history[i].date === today) {
-              total += history[i].amount;
-            }
-          }
-          total = parseFloat(total.toFixed(2));
-          // 同步到 localStorage 作为备份
-          saveToStorage();
-          
-        } catch (err) {
-          console.error("[初始化] 加载云端数据异常，回退 localStorage:", err.message);
-          loadFromStorage();
-        }
-        updateDisplay();
-      }
-
-      // ---------- 检查登录状态（页面初始化时） ----------
+      // ---------- 检查登录状态 ----------
       async function checkSession() {
-        authLoading.classList.remove("hidden");
         try {
           var { data, error } = await supabase.auth.getSession();
           if (error) throw error;
           if (data && data.session && data.session.user) {
             currentUser = data.session.user;
-            updateAuthUI();
+            window.__currentUser = currentUser;
             await afterLoginInit();
           } else {
             currentUser = null;
-            updateAuthUI();
-            // 未登录：使用 localStorage
+            window.__currentUser = null;
             loadFromStorage();
             updateDisplay();
           }
         } catch (err) {
           console.error("[认证] Session 检查失败:", err.message);
           currentUser = null;
-          updateAuthUI();
+          window.__currentUser = null;
           loadFromStorage();
           updateDisplay();
-        } finally {
-          authLoading.classList.add("hidden");
         }
       }
 
@@ -1533,7 +1245,6 @@
         updateBudgetDisplay();
       }
 
-      // ---------- 更新预算显示 ----------
       function updateBudgetDisplay() {
         if (budget === null) {
           budgetRemainingEl.textContent = "今日预算剩余：--元";
@@ -1550,7 +1261,6 @@
         }
       }
 
-      // ---------- 触发弹跳动画 ----------
       function triggerBounceAnimation(className) {
         totalAmountEl.classList.remove("bounce", "reset-flash");
         void totalAmountEl.offsetWidth;
@@ -1569,32 +1279,27 @@
         var timeStr = getTimeString();
         var dateStr = getDateString();
 
-        // 累加
         total += num;
-        // 记录到历史栈
         var record = { amount: num, note: noteText, time: timeStr, date: dateStr };
         history.push(record);
-        // 保存到 localStorage
         saveToStorage();
         updateDisplay();
         triggerBounceAnimation("bounce");
 
-        // 清空输入框
         amountInput.value = "";
         noteInput.value = "";
         amountInput.focus();
 
-        // 同步到 Supabase（后台静默，不阻塞）
         if (currentUser) {
           var dbId = await saveToSupabase(record);
           if (dbId) {
             record._dbId = dbId;
-            saveToStorage(); // 更新含 _dbId 的记录到 localStorage
+            saveToStorage();
           }
         }
       }
 
-      // ---------- 撤销确认弹窗：打开 ----------
+      // ---------- 撤销 ----------
       function openUndoConfirmModal() {
         var hasToday = false;
         for (var i = history.length - 1; i >= 0; i--) {
@@ -1604,18 +1309,15 @@
         undoConfirmModal.classList.remove("hidden");
       }
 
-      // ---------- 撤销确认弹窗：关闭 ----------
       function closeUndoConfirmModal() {
         undoConfirmModal.classList.add("hidden");
       }
 
-      // ---------- 确认撤销 ----------
       function confirmUndo() {
         closeUndoConfirmModal();
         undoLast();
       }
 
-      // ---------- 撤销上一笔（仅限今日记录） ----------
       async function undoLast() {
         if (history.length === 0) return;
         for (var i = history.length - 1; i >= 0; i--) {
@@ -1626,7 +1328,6 @@
             saveToStorage();
             updateDisplay();
             triggerBounceAnimation("reset-flash");
-            // 同步删除 Supabase
             if (currentUser && removed._dbId) {
               deleteRecordFromSupabase(removed._dbId);
             }
@@ -1708,7 +1409,6 @@
         historyModal.classList.add("hidden");
       }
 
-      // ---------- 删除一条记录 ----------
       async function deleteRecord(originalIndex) {
         if (!confirm("确定删除这条记录吗？")) return;
         var removed = history.splice(originalIndex, 1)[0];
@@ -1718,13 +1418,11 @@
         saveToStorage();
         updateDisplay();
         renderHistoryList();
-        // 同步删除 Supabase
         if (currentUser && removed._dbId) {
           deleteRecordFromSupabase(removed._dbId);
         }
       }
 
-      // ---------- 开始编辑一条记录 ----------
       function startEdit(originalIndex, itemDiv) {
         var record = history[originalIndex];
         itemDiv.setAttribute("data-editing-index", originalIndex);
@@ -1796,7 +1494,6 @@
         });
       }
 
-      // ---------- 保存编辑 ----------
       async function saveEdit(originalIndex, newAmountStr, newNoteStr) {
         var newAmount = parseFloat(newAmountStr);
         if (isNaN(newAmount) || newAmount <= 0) return;
@@ -1815,7 +1512,6 @@
         updateDisplay();
         renderHistoryList();
 
-        // 同步更新 Supabase
         if (currentUser && oldRecord._dbId) {
           updateRecordInSupabase(oldRecord._dbId, {
             amount: history[originalIndex].amount,
@@ -1826,7 +1522,6 @@
         }
       }
 
-      // ---------- 渲染历史列表（仅显示今日记录） ----------
       function renderHistoryList() {
         historyList.innerHTML = "";
         var today = getDateString();
@@ -1934,17 +1629,34 @@
         if (e.key === "Enter") { e.preventDefault(); addRecord(); }
       });
 
-      // ---------- 认证按钮事件 ----------
-      loginBtn.addEventListener("click", handleLogin);
-      registerBtn.addEventListener("click", handleRegister);
-      logoutBtn.addEventListener("click", handleLogout);
-
-      // 密码输入框回车登录
-      authPassword.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") { e.preventDefault(); handleLogin(); }
+      // ---------- storage 事件监听（跨页面登录/退出同步） ----------
+      window.addEventListener('storage', function (e) {
+        if (e.key === 'auth_state_changed') {
+          supabase.auth.getSession().then(function (result) {
+            var sessionData = result.data;
+            if (sessionData && sessionData.session && sessionData.session.user) {
+              // 其他页面登录了 → 重新初始化
+              currentUser = sessionData.session.user;
+              window.__currentUser = currentUser;
+              afterLoginInit();
+            } else {
+              // 其他页面退出了 → 回退本地数据
+              currentUser = null;
+              window.__currentUser = null;
+              loadFromStorage();
+              updateDisplay();
+            }
+          }).catch(function () {
+            // 检查失败，回退本地
+            currentUser = null;
+            window.__currentUser = null;
+            loadFromStorage();
+            updateDisplay();
+          });
+        }
       });
 
-      // ---------- 页面初始化：先检查登录状态，再决定数据来源 ----------
+      // ---------- 页面初始化 ----------
       checkSession();
 
       // ---------- 阻止移动端双击缩放 ----------
