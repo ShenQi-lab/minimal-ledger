@@ -1452,8 +1452,35 @@
             console.log("[初始化] 云端加载失败，使用 localStorage 数据");
             loadFromStorage();
           } else if (cloudRecords.length > 0) {
-            // 云端有数据：用云端数据覆盖本地
-            history = cloudRecords;
+            // 云端有数据：合并本地未同步的记录，防止覆盖丢失
+            var localRecords = [];
+            try {
+              var stored = localStorage.getItem(HISTORY_KEY);
+              if (stored) localRecords = JSON.parse(stored);
+            } catch (e) {}
+            
+            // 找出本地有但云端没有的记录（未同步的）
+            var merged = cloudRecords.slice();
+            for (var i = 0; i < localRecords.length; i++) {
+              var local = localRecords[i];
+              // 本地记录没有 _dbId，说明还没同步到云端
+              if (!local._dbId) {
+                // 按时间+金额+备注匹配，避免重复
+                var exists = false;
+                for (var j = 0; j < merged.length; j++) {
+                  if (merged[j].date === local.date && 
+                      merged[j].time === local.time && 
+                      merged[j].amount === local.amount &&
+                      merged[j].note === local.note) {
+                    exists = true;
+                    break;
+                  }
+                }
+                if (!exists) merged.push(local);
+              }
+            }
+            
+            history = merged;
             // 重算今日总支出
             total = 0;
             var today = getDateString();
@@ -1465,10 +1492,10 @@
             total = parseFloat(total.toFixed(2));
             // 同步到 localStorage 作为备份
             saveToStorage();
-            console.log("[初始化] 从云端加载了 " + cloudRecords.length + " 条记录");
+            console.log("[初始化] 合并完成，云端 " + cloudRecords.length + " 条 + 本地未同步 " + (merged.length - cloudRecords.length) + " 条");
           } else {
             // 云端无数据（迁移已处理或新用户），使用本地数据
-            console.log("[初始化] 云端无数据，使用本地数据");
+            console.log("[初始化] 云端无数据，保留本地数据");
             loadFromStorage();
           }
         } catch (err) {
