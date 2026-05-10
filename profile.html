@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <title>我的 · 极简记账本 V1.11.0</title>
+  <title>我的 · 极简记账本 V1.11.1</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
   <link rel="icon" type="image/png" href="icon.png">
@@ -358,7 +358,11 @@
       text-align: center;
       color: var(--text-light);
       font-size: 0.9rem;
-      padding: 20px 0;
+      padding: 40px 0;
+    }
+
+    .profile-content.hidden {
+      display: none;
     }
 
     /* ---------- 底部导航栏 ---------- */
@@ -428,8 +432,11 @@
   <div class="page">
     <h1 class="title">我的</h1>
 
-    <!-- 头像区 -->
-    <div class="profile-avatar-section">
+    <!-- 加载中 -->
+    <div class="profile-loading" id="profileLoading">加载中…</div>
+
+    <!-- 内容区（加载完成后显示） -->
+    <div class="profile-content hidden" id="profileContent">
       <div class="profile-avatar" id="profileAvatar">👤</div>
       <div class="profile-name" id="profileName">未登录</div>
       <div class="profile-subtitle" id="profileSubtitle">登录后开启您的记账之旅</div>
@@ -508,6 +515,7 @@
         </div>
       </div>
     </div>
+    </div>  <!-- 结束 profile-content -->
   </div>
 
   <!-- 登录弹窗 -->
@@ -788,6 +796,10 @@
       }
 
       async function checkSession() {
+        // 显示加载中，隐藏内容
+        document.getElementById('profileLoading').classList.remove('hidden');
+        document.getElementById('profileContent').classList.add('hidden');
+        
         try {
           var { data, error } = await supabase.auth.getSession();
           if (error) throw error;
@@ -800,7 +812,13 @@
           console.error("[个人中心] Session 检查失败:", err.message);
           currentUser = null;
         }
+        
+        // 加载完成，更新 UI
         updateProfileUI();
+        
+        // 隐藏加载中，显示内容
+        document.getElementById('profileLoading').classList.add('hidden');
+        document.getElementById('profileContent').classList.remove('hidden');
       }
 
       // ========== 菜单点击 ==========
@@ -845,6 +863,10 @@
       // ========== storage 事件监听 ==========
       window.addEventListener('storage', function (e) {
         if (e.key === 'auth_state_changed') {
+          // 显示加载中
+          document.getElementById('profileLoading').classList.remove('hidden');
+          document.getElementById('profileContent').classList.add('hidden');
+          
           supabase.auth.getSession().then(function (result) {
             var sessionData = result.data;
             if (sessionData && sessionData.session && sessionData.session.user) {
@@ -856,6 +878,10 @@
           }).catch(function () {
             currentUser = null;
             updateProfileUI();
+          }).finally(function () {
+            // 隐藏加载中，显示内容
+            document.getElementById('profileLoading').classList.add('hidden');
+            document.getElementById('profileContent').classList.remove('hidden');
           });
         }
       });
