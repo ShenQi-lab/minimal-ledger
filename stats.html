@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <title>统计 · 极简记账本 V1.11.6</title>
+  <title>统计 · 极简记账本 V1.11.7</title>
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23FF8C42'/><text y='.9em' font-size='90' text-anchor='middle' fill='white'>💰</text></svg>">
@@ -1083,20 +1083,21 @@
         if (trendChart) { trendChart.destroy(); }
         var ctx = trendChartCanvas.getContext("2d");
         trendChart = new Chart(ctx, {
-          type: "bar",
+          type: "line",
           data: {
             labels: labels,
             datasets: [{
               data: dataPoints,
-              backgroundColor: "rgba(255, 140, 66, 0.4)",
               borderColor: "#FF8C42",
-              borderWidth: 1.2,
-              borderRadius: 4,
-              hoverBackgroundColor: "rgba(255, 140, 66, 0.6)",
+              backgroundColor: "rgba(255, 140, 66, 0.12)",
+              fill: false,
+              tension: 0.35,
+              pointRadius: 3,
+              pointHoverRadius: 6,
               pointBackgroundColor: "#FF8C42",
               pointBorderColor: "#fff",
               pointBorderWidth: 1.5,
-              pointHoverRadius: 6
+              borderWidth: 2
             }]
           },
           options: {
@@ -1111,14 +1112,20 @@
                 cornerRadius: 6,
                 padding: 10,
                 callbacks: {
-                  label: function (ctx) { return ctx.parsed.y + " 元"; }
+                  label: function (ctx) {
+                    return ctx.parsed.y + " 元";
+                  }
                 }
               }
             },
             scales: {
               x: {
                 grid: { display: false },
-                ticks: { font: { size: 11 }, color: "#999", maxTicksLimit: 15 }
+                ticks: {
+                  font: { size: 11 },
+                  color: "#999",
+                  maxTicksLimit: 15
+                }
               },
               y: {
                 beginAtZero: true,
@@ -1126,7 +1133,9 @@
                 ticks: {
                   font: { size: 11 },
                   color: "#999",
-                  callback: function (value) { return value + "元"; }
+                  callback: function (value) {
+                    return value + "元";
+                  }
                 }
               }
             },

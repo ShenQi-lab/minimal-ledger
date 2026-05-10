@@ -1,5 +1,5 @@
 /* ==========================================
-极简记账本 V1.11.6 — Service Worker
+极简记账本 V1.11.7 — Service Worker
    HTML 文件：网络优先 (Network First) 策略
    其他静态资源：缓存优先 (Cache First) 策略
    自动更新：install 跳过等待 + activate 接管页面 +
@@ -17,7 +17,7 @@ var CORE_FILES = [
   "stats.html",
   "manifest.json",
   "icon.png",
-  "update-v1.11.6"
+  "update-v1.11.7"
 ];
 
 // HTML 文件名列表（用于判断网络优先策略）
